@@ -28,7 +28,7 @@ export default function Login() {
   };
 
   return (
-    <AuthShell title="Welcome back" sub="Login to your HFSBAG account">
+    <AuthShell title="Welcome back" sub="Login to your HFS account">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <Label>Email</Label>
@@ -43,7 +43,7 @@ export default function Login() {
         </Button>
       </form>
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        New to HFSBAG? <Link to="/register" className="font-semibold text-brand-dark hover:underline">Create account</Link>
+        New to HFS? <Link to="/register" className="font-semibold text-brand-dark hover:underline">Create account</Link>
       </p>
       <div className="mt-4 rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
         <b>Demo:</b> customer@demo.com / Customer@123 · Seller: royalstorage@demo.com / Seller@123
@@ -70,7 +70,7 @@ export function Register() {
   };
 
   return (
-    <AuthShell title="Create your account" sub="Join HFSBAG and start shopping">
+    <AuthShell title="Create your account" sub="Join HFS and start shopping">
       <form onSubmit={submit} className="space-y-4">
         <Field label="Full Name" v={form.name} set={(v) => setForm({ ...form, name: v })} testid="reg-name" />
         <Field label="Email" type="email" v={form.email} set={(v) => setForm({ ...form, email: v })} testid="reg-email" />
@@ -105,7 +105,7 @@ export function SellerRegister() {
   };
 
   return (
-    <AuthShell title="Become a Seller" sub="Start selling on HFSBAG marketplace" wide>
+    <AuthShell title="Become a Seller" sub="Start selling on HFS marketplace" wide>
       <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
         <Field label="Your Name" v={form.name} set={(v) => setForm({ ...form, name: v })} testid="sreg-name" />
         <Field label="Email" type="email" v={form.email} set={(v) => setForm({ ...form, email: v })} testid="sreg-email" />

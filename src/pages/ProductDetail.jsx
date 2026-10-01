@@ -25,7 +25,7 @@ export default function ProductDetail() {
 
   const load = () => api.get(`/products/${id}`).then(({ data }) => {
     setP(data); setActiveImg(0);
-    document.title = `${data.name} | HFSBAG`;
+    document.title = `${data.name} | HFS`;
   });
 
   useEffect(() => { load(); window.scrollTo(0, 0); }, [id]);

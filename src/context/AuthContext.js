@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [booting, setBooting] = useState(true);
 
   const loadMe = useCallback(async () => {
-    const token = localStorage.getItem("hfsbag_token");
+    const token = localStorage.getItem("hfs_token");
     if (!token) {
       setUser(false);
       setBooting(false);
@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
       const { data } = await api.get("/auth/me");
       setUser(data);
     } catch (e) {
-      localStorage.removeItem("hfsbag_token");
+      localStorage.removeItem("hfs_token");
       setUser(false);
     } finally {
       setBooting(false);
@@ -31,20 +31,20 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("hfsbag_token", data.token);
+    localStorage.setItem("hfs_token", data.token);
     setUser(data.user);
     return data.user;
   };
 
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
-    localStorage.setItem("hfsbag_token", data.token);
+    localStorage.setItem("hfs_token", data.token);
     setUser(data.user);
     return data.user;
   };
 
   const logout = () => {
-    localStorage.removeItem("hfsbag_token");
+    localStorage.removeItem("hfs_token");
     setUser(false);
   };
 

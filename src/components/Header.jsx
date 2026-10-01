@@ -60,9 +60,7 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
-          <Link to="/" data-testid="logo-link" className="font-heading text-2xl font-extrabold tracking-tight text-slate-900">
-            <span className="text-brand">HFS</span>BAG
-          </Link>
+          <Link to="/" data-testid="logo-link" className="font-heading text-2xl font-extrabold tracking-tight text-slate-900"><div className="flex items-center gap-2"><img src="/logo.png" alt="HFS" className="h-9 w-auto object-contain rounded-full" /><span className="font-extrabold text-xl tracking-tight text-gray-900">HFS</span></div></Link>
 
           <form onSubmit={submitSearch} className="relative ml-2 hidden flex-1 md:block">
             <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -78,7 +76,7 @@ export function Header() {
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <Link to="/seller/register" data-testid="seller-register-link" className="hidden lg:block">
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full border-brand/40 text-brand-dark hover:bg-accent">
-                <Store className="h-4 w-4" /> Sell on HFSBAG
+                <Store className="h-4 w-4" /> Sell on HFS
               </Button>
             </Link>
 

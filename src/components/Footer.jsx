@@ -31,7 +31,7 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} HFSBAG Marketplace. All rights reserved. Made in India 🇮🇳
+        © {new Date().getFullYear()} HFS Marketplace. All rights reserved. Made in India 🇮🇳
       </div>
     </footer>
   );

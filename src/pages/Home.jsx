@@ -46,7 +46,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "HFSBAG - Storage, Covers & Bags Marketplace";
+    document.title = "HFS - Storage, Covers & Bags Marketplace";
     Promise.all([
       api.get("/banners"),
       api.get("/categories"),
@@ -147,7 +147,7 @@ export default function Home() {
       <Section title="New Arrivals" to="/products?sort=newest"><Rail products={newArr} loading={loading} /></Section>
 
       {/* Sellers */}
-      <Section title="Featured Stores" subtitle="Trusted sellers on HFSBAG" to="/products">
+      <Section title="Featured Stores" subtitle="Trusted sellers on HFS" to="/products">
         <div className="grid gap-4 sm:grid-cols-3">
           {stores.map((s) => (
             <Link key={s.id} to={`/store/${s.id}`} data-testid={`store-${s.id}`} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all hover:shadow-lg">
