@@ -194,7 +194,7 @@ function SellerOrders() {
       {orders.map((o) => (
         <div key={o.id} className="rounded-2xl border border-border bg-card p-4" data-testid={`seller-order-${o.id}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div><div className="flex items-center gap-2"><img src="/logo.png" alt="HFS" className="h-8 w-auto object-contain rounded-full" /><span className="font-bold text-lg text-brand-dark">HFS</span></div><span className={`ml-2 text-sm font-semibold capitalize ${STATUS[o.status]}`}>{o.status}</span></div>
+            <div><div className="flex items-center gap-2"><img src="/logo.svg" alt="HFS" className="h-8 w-auto object-contain rounded-full" /><span className="font-bold text-lg text-brand-dark">HFS</span></div><span className={`ml-2 text-sm font-semibold capitalize ${STATUS[o.status]}`}>{o.status}</span></div>
             <Select value={["confirmed", "shipped", "delivered"].includes(o.status) ? o.status : ""} onValueChange={(v) => setStatus(o.id, v)}>
               <SelectTrigger className="w-40" data-testid={`order-status-${o.id}`}><SelectValue placeholder="Update status" /></SelectTrigger>
               <SelectContent><SelectItem value="confirmed">Confirmed</SelectItem><SelectItem value="shipped">Shipped</SelectItem><SelectItem value="delivered">Delivered</SelectItem></SelectContent>
