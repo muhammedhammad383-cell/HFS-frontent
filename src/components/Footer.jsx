@@ -14,7 +14,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-border bg-slate-900 text-slate-300">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-8">
         <div>
-          <div className="font-heading text-2xl font-extrabold text-white"><span className="text-brand-light">HFS</span>BAG</div>
+          <div className="font-heading text-2xl font-extrabold text-white"><span className="text-brand-light">HFS</span></div>
           <p className="mt-3 text-sm leading-relaxed text-slate-400">
             India's trusted marketplace for storage, covers and organization products. Quality-focused sellers, secure payments and fast delivery.
           </p>
