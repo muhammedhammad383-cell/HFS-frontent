@@ -371,7 +371,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <div className="flex">
         <aside className="fixed hidden h-screen w-56 flex-col border-r border-border bg-slate-900 p-4 lg:flex">
-          <div className="mb-6 px-2 font-heading text-xl font-extrabold text-white"><span className="text-brand-light">HFS</span>BAG <span className="text-xs font-normal text-slate-400">Admin</span></div>
+          <div className="mb-6 px-2 font-heading text-xl font-extrabold text-white"><span className="text-brand-light">HFS</span> <span className="text-xs font-normal text-slate-400">Admin</span></div>
           <nav className="flex-1 space-y-0.5 overflow-auto">
             {nav.map(([to, label, Icon, end]) => (
               <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-brand text-white" : "text-slate-300 hover:bg-white/10"}`}>
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
         <main className="w-full lg:ml-56">
           <div className="border-b border-border bg-card px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between">
-              <NavLink to="/" className="font-heading text-lg font-extrabold"><span className="text-brand">HFS</span>BAG</NavLink>
+              <NavLink to="/" className="font-heading text-lg font-extrabold"><span className="text-brand">HFS</span></NavLink>
               <span className="text-sm font-medium text-slate-700">{user?.name}</span>
             </div>
             <nav className="mt-2 flex gap-2 overflow-auto no-scrollbar lg:hidden">
