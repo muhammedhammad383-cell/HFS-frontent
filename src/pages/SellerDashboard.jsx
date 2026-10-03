@@ -101,13 +101,56 @@ function ProductForm({ initial, cats, onSave, onClose }) {
       </div>
       <div><Label>SKU</Label><Input value={f.sku} onChange={(e) => setF({ ...f, sku: e.target.value })} className="mt-1" data-testid="pf-sku" /></div>
       <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} className="mt-1" data-testid="pf-desc" /></div>
-      <div>
-        <Label>Image URLs</Label>
-        {f.images.map((img, i) => (
-          <Input key={i} value={img} placeholder="https://..." className="mt-1" onChange={(e) => { const im = [...f.images]; im[i] = e.target.value; setF({ ...f, images: im }); }} />
-        ))}
-        <button onClick={() => setF({ ...f, images: [...f.images, ""] })} className="mt-1 text-xs font-semibold text-brand-dark">+ Add another image</button>
-      </div>
+          <div>
+            <Label>Product Photos</Label>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-center justify-center gap-2 w-full p-2.5 border-2 border-dashed border-orange-400 rounded-lg cursor-pointer bg-orange-50 hover:bg-orange-100 text-sm font-semibold text-brand-dark transition-all">
+                <span>📁 Choose Photo from Gallery</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const updated = f.images && f.images[0] ? [reader.result, ...f.images.slice(1)] : [reader.result];
+                      setF({ ...f, images: updated });
+                    };
+                    reader.readAsDataURL(file);
+                  }} 
+                />
+              </label>
+
+              {(f.images || []).map((img, i) => (
+                <div key={i} className="flex items-center gap-2 mt-1">
+                  {img && <img src={img} alt="Preview" className="h-10 w-10 rounded border object-cover shrink-0" />}
+                  <Input 
+                    value={img} 
+                    placeholder="https://... or choose file above" 
+                    onChange={(e) => { 
+                      const im = [...f.images]; 
+                      im[i] = e.target.value; 
+                      setF({ ...f, images: im }); 
+                    }} 
+                  />
+                  {i > 0 && (
+                    <button 
+                      type="button" 
+                      onClick={() => setF({ ...f, images: f.images.filter((_, idx) => idx !== i) })}
+                      className="text-xs text-red-500 font-bold px-1"
+                    >✕</button>
+                  )}
+                </div>
+              ))}
+              <button 
+                type="button" 
+                onClick={() => setF({ ...f, images: [...(f.images || []), ""] })} 
+                className="mt-1 text-xs font-semibold text-brand-dark block"
+              >+ Add another image URL</button>
+            </div>
+          </div>
       <div>
         <Label>Specifications</Label>
         {f.specifications.map((s, i) => (
