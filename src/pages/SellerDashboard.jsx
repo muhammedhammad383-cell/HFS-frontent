@@ -109,16 +109,24 @@ function ProductForm({ initial, cats, onSave, onClose }) {
                 <input 
                   type="file" 
                   accept="image/*" 
+                  multiple 
                   className="hidden" 
                   onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const updated = f.images && f.images[0] ? [reader.result, ...f.images.slice(1)] : [reader.result];
-                      setF({ ...f, images: updated });
-                    };
-                    reader.readAsDataURL(file);
+                    const files = Array.from(e.target.files || []);
+                    if (!files.length) return;
+                    
+                    const readFiles = files.map(file => {
+                      return new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(file);
+                      });
+                    });
+
+                    Promise.all(readFiles).then(newImages => {
+                      const existing = (f.images || []).filter(img => img && img.trim() !== "");
+                      setF({ ...f, images: [...existing, ...newImages] });
+                    });
                   }} 
                 />
               </label>
