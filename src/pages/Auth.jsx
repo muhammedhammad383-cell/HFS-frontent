@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { apiError } from "@/lib/api";
+import api, { apiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,11 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotStep, setForgotStep] = useState(1);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -26,7 +31,109 @@ export default function Login() {
     } catch (err) { toast.error(apiError(err)); }
     finally { setLoading(false); }
   };
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post("/auth/forgot-password", { email: forgotEmail });
+      toast.success("OTP aapke email par bhej diya gaya hai!");
+      setForgotStep(2);
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post("/auth/reset-password", {
+        email: forgotEmail,
+        otp: forgotOtp,
+        new_password: newPassword,
+      });
+      toast.success("Password reset ho gaya! Ab naye password se login karein.");
+      setShowForgot(false);
+      setForgotStep(1);
+      setForgotEmail("");
+      setForgotOtp("");
+      setNewPassword("");
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+    if (showForgot) {
+    return (
+      <AuthShell title="Reset Password" sub="Apna email darj karein password reset karne ke liye">
+        {forgotStep === 1 ? (
+          <form onSubmit={handleSendOtp} className="space-y-4">
+            <div>
+              <Label>Registered Email</Label>
+              <Input
+                type="email"
+                required
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="name@example.com"
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Sending OTP..." : "Send OTP"}
+            </Button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowForgot(false)}
+                className="text-xs text-muted-foreground hover:underline"
+              >
+                Back to Login
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div>
+              <Label>Enter 6-digit OTP</Label>
+              <Input
+                type="text"
+                required
+                value={forgotOtp}
+                onChange={(e) => setForgotOtp(e.target.value)}
+                placeholder="123456"
+              />
+            </div>
+            <div>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Resetting..." : "Set New Password"}
+            </Button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setForgotStep(1)}
+                className="text-xs text-muted-foreground hover:underline"
+              >
+                Change Email
+              </button>
+            </div>
+          </form>
+        )}
+      </AuthShell>
+    );
+    }
+  
   return (
     <AuthShell title="Welcome back" sub="Login to your HFS account">
       <form onSubmit={submit} className="space-y-4">
@@ -38,6 +145,16 @@ export default function Login() {
           <Label>Password</Label>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" data-testid="login-password" />
         </div>
+        <div className="flex justify-end">
+  <button
+    type="button"
+    onClick={() => setShowForgot(true)}
+    className="text-xs text-orange-600 hover:underline"
+  >
+    Forgot Password?
+  </button>
+</div>
+        
         <Button type="submit" disabled={loading} data-testid="login-submit" className="w-full rounded-xl bg-brand py-6 font-semibold text-white hover:bg-brand-dark">
           {loading ? "Logging in..." : "Login"}
         </Button>
