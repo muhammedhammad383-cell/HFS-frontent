@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingCart, Wallet, Store, LogOut, Boxes,
-  TrendingUp, Clock, Trash2, Pencil, IndianRupee,
+  TrendingUp, Clock, Trash2, Pencil, IndianRupee, User
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import api, { inr, apiError } from "@/lib/api";
@@ -23,6 +23,81 @@ function Stat({ icon: Icon, label, value, accent }) {
       <div className={`mb-2 grid h-10 w-10 place-items-center rounded-xl ${accent || "bg-accent text-brand-dark"}`}><Icon className="h-5 w-5" /></div>
       <p className="font-heading text-2xl font-black text-slate-900">{value}</p>
       <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+function SellerProfile() {
+  const { user } = useAuth();
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.put("/auth/profile", { name, email, phone });
+      toast.success("Seller profile successfully update ho gayi!");
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-card p-6 rounded-2xl border border-border max-w-xl space-y-4">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Seller Profile Settings</h2>
+        <p className="text-sm text-muted-foreground">Apna name, contact email aur phone number update karein</p>
+      </div>
+
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div>
+          <Label>Contact Name</Label>
+          <Input 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            placeholder="Seller Name" 
+            required 
+          />
+        </div>
+
+        <div>
+          <Label>Email Address</Label>
+          <Input 
+            type="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            placeholder="seller@example.com" 
+            required 
+          />
+        </div>
+
+        <div>
+          <Label>Phone Number</Label>
+          <Input 
+            type="tel" 
+            value={phone} 
+            onChange={(e) => setPhone(e.target.value)} 
+            placeholder="Mobile number" 
+          />
+        </div>
+
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+          {loading ? "Updating..." : "Save Profile"}
+        </Button>
+      </form>
     </div>
   );
 }
@@ -283,6 +358,7 @@ export default function SellerDashboard() {
     ["/seller/products", "Products", Package],
     ["/seller/orders", "Orders", ShoppingCart],
     ["/seller/store", "Store Settings", Store],
+        ["/seller/profile", "Profile", User]
   ];
   return (
     <div className="min-h-screen bg-background">
@@ -316,6 +392,7 @@ export default function SellerDashboard() {
               <Route path="products" element={<Products />} />
               <Route path="orders" element={<SellerOrders />} />
               <Route path="store" element={<StoreSettings />} />
+              <Route path="profile" element={<SellerProfile />} />
             </Routes>
           </div>
         </main>
