@@ -543,7 +543,7 @@ export default function AdminDashboard() {
               <Route path="banners" element={<Banners />} />
               <Route path="reviews" element={<Reviews />} />
               <Route path="returns" element={<Returns />} />
-              <Route path="payouts" element={<DataTable url="/admin/payouts""/>} /> testId="payouts-table" columns={[{ key: "seller", label: "Seller" }, { key: "amount", label: "Amount" }, { key: "status", label: "Status" }, { key: "created_at", label: "Date" }]} />} />
+              <Route path="payouts" element={<DataTable url="/admin/payouts""/>} /> 
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </div>
