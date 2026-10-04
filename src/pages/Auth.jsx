@@ -135,7 +135,7 @@ export default function Login() {
     }
   
   return (
-    <AuthShell title="Welcome back" sub="Login to your HFS account">
+    <AuthShell title="Welcome back" sub="Login to your HFSBAZAAR account">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <Label>Email</Label>
@@ -248,7 +248,7 @@ function AuthShell({ title, sub, children, wide }) {
     <div className="mx-auto grid min-h-[80vh] max-w-7xl place-items-center px-4 py-10">
       <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-3xl border border-border bg-card p-8 shadow-sm`}>
         <div className="mb-6 text-center">
-          <Link to="/" className="font-heading text-2xl font-extrabold"><span className="text-brand">HFS</span>BAG</Link>
+          <Link to="/" className="font-heading text-2xl font-extrabold"><span className="text-brand">HFS</span>BAZAAR</Link>
           <h1 className="mt-3 font-heading text-2xl font-bold text-slate-900">{title}</h1>
           <p className="text-sm text-muted-foreground">{sub}</p>
         </div>
