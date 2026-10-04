@@ -44,27 +44,67 @@ export default function Checkout() {
 
   const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && addr.address_line;
 
-  const placeOrder = async () => {
-    if (!validAddr) { toast.error("Please fill all required address fields"); return; }
+    const placeOrder = async () => {
+    if (!validAddr) return toast.error("Please fill all required address fields");
     setPlacing(true);
-    setJustPlaced(true);
     try {
       const { data } = await api.post("/orders/checkout", {
-        address: addr, payment_method: method, coupon_code: appliedCoupon || null,
+        address: addr, payment_method: method, coupon_code: appliedCoupon
       });
+
       if (method === "cod") {
+        setJustPlaced(true);
         await refreshCart();
         toast.success("Order placed successfully!");
         navigate(`/account/orders/${data.order_id}`);
-      } else {
-        // Payment gateway is in architecture/mock mode — verify to confirm.
-        await api.post("/orders/verify-payment", { order_id: data.order_id, razorpay_payment_id: "mock_payment", razorpay_signature: "mock_sig" });
-        await refreshCart();
-        toast.success("Payment successful! Order confirmed.");
-        navigate(`/account/orders/${data.order_id}`);
+      } else if (method === "razorpay") {
+        if (!window.Razorpay) {
+          toast.error("Razorpay SDK load nahi hua. Page refresh karein.");
+          return;
+        }
+
+        const options = {
+          key: data.payment_info?.key_id,
+          amount: data.payment_info?.amount,
+          currency: data.payment_info?.currency || "INR",
+          name: "HFS Bazaar",
+          description: "Order Payment",
+          order_id: data.payment_info?.order_id,
+          handler: async function (response) {
+            try {
+              await api.post("/orders/verify-payment", {
+                order_id: data.order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              });
+              setJustPlaced(true);
+              await refreshCart();
+              toast.success("Payment successful! Order confirmed.");
+              navigate(`/account/orders/${data.order_id}`);
+            } catch (err) {
+              toast.error(apiError(err) || "Payment verification failed");
+            }
+          },
+          prefill: {
+            name: addr.full_name,
+            contact: addr.mobile
+          },
+          theme: {
+            color: "#0f172a"
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", function (resp) {
+          toast.error(resp.error?.description || "Payment failed");
+        });
+        rzp.open();
       }
-    } catch (e) { toast.error(apiError(e)); setJustPlaced(false); }
-    finally { setPlacing(false); }
+    } catch (e) {
+      toast.error(apiError(e));
+    } finally {
+      setPlacing(false);
+    }
   };
 
   const methods = [
