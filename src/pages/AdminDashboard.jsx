@@ -90,6 +90,143 @@ function DataTable({ url, columns, testid }) {
     </div>
   );
 }
+function CustomerManager() {
+  const [users, setUsers] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "" });
+  const [saving, setSaving] = useState(false);
+
+  const load = () => {
+    api.get("/admin/users").then(({ data }) => setUsers(data)).catch(() => setUsers([]));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const openEdit = (u) => {
+    setSelectedUser(u);
+    setEditForm({ name: u.name || "", email: u.email || "", phone: u.phone || "" });
+  };
+
+  const saveEdit = async () => {
+    if (!selectedUser) return;
+    setSaving(true);
+    try {
+      await api.put(`/admin/users/${selectedUser._id || selectedUser.id}`, editForm);
+      toast.success("User profile updated successfully");
+      setSelectedUser(null);
+      load();
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleBlock = async (u) => {
+    const id = u._id || u.id;
+    try {
+      await api.put(`/admin/users/${id}/block`);
+      toast.success(u.blocked ? "User unblocked" : "User blocked");
+      load();
+    } catch (err) {
+      toast.error(apiError(err));
+    }
+  };
+
+  if (!users) return <Loader />;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-heading font-bold text-slate-900">Customer Management</h2>
+        <span className="text-xs text-muted-foreground">{users.length} Total Registered Users</span>
+      </div>
+
+      <div className="overflow-auto rounded-2xl border border-border bg-card">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary text-left text-xs uppercase text-slate-500">
+            <tr>
+              <th className="p-3">Customer</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">Phone</th>
+              <th className="p-3">Role</th>
+              <th className="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {users.map((u) => {
+              const id = u._id || u.id;
+              return (
+                <tr key={id} className="hover:bg-muted/30">
+                  <td className="p-3 font-medium text-slate-900">{u.name || "N/A"}</td>
+                  <td className="p-3 text-slate-600">{u.email}</td>
+                  <td className="p-3 text-slate-600">{u.phone || "—"}</td>
+                  <td className="p-3">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize text-slate-700 font-medium">
+                      {u.role || "customer"}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right space-x-2">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(u)}>
+                      <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={u.blocked ? "default" : "destructive"} 
+                      onClick={() => toggleBlock(u)}
+                    >
+                      {u.blocked ? "Unblock" : "Block"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedUser && (
+        <Dialog open={true} onOpenChange={() => setSelectedUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Customer: {selectedUser.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label>Customer Name</Label>
+                <Input 
+                  value={editForm.name} 
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} 
+                />
+              </div>
+              <div>
+                <Label>Email Address</Label>
+                <Input 
+                  type="email"
+                  value={editForm.email} 
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} 
+                />
+              </div>
+              <div>
+                <Label>Phone Number</Label>
+                <Input 
+                  value={editForm.phone} 
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} 
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedUser(null)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
 
 function Sellers() {
   const [rows, setRows] = useState(null);
@@ -365,6 +502,7 @@ export default function AdminDashboard() {
     ["/admin/banners", "Banners", Image],
     ["/admin/reviews", "Reviews", Star],
     ["/admin/returns", "Returns", RotateCcw],
+    ["/admin/payouts", "Payouts", Wallet],
     ["/admin/settings", "Settings", Settings],
   ];
   return (
@@ -400,11 +538,12 @@ export default function AdminDashboard() {
               <Route path="products" element={<ProductApprovals />} />
               <Route path="categories" element={<Categories />} />
               <Route path="orders" element={<AdminOrders />} />
-              <Route path="customers" element={<DataTable url="/admin/users?role=customer" testid="customers-table" columns={[{ key: "name", label: "Name" }, { key: "email", label: "Email" }, { key: "phone", label: "Phone" }, { key: "status", label: "Status", render: (r) => <span className="capitalize">{r.status}</span> }]} />} />
+              <Route path="customers" element={<CustomerManager />} /
               <Route path="coupons" element={<Coupons />} />
               <Route path="banners" element={<Banners />} />
               <Route path="reviews" element={<Reviews />} />
               <Route path="returns" element={<Returns />} />
+              <Route path="payouts" element={<DataTable url="/admin/payouts" testId="payouts-table" columns={[{ key: "seller", label: "Seller" }, { key: "amount", label: "Amount" }, { key: "status", label: "Status" }, { key: "created_at", label: "Date" }]} />} />
               <Route path="settings" element={<AdminSettings />} />
             </Routes>
           </div>
