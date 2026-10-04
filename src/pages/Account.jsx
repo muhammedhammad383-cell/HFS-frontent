@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate, useParams, NavLink } from "react-router-dom";
-import { Package, Heart, MapPin, Bell, RotateCcw, ChevronRight, Truck, Check, X } from "lucide-react";
+import { Package, Heart, MapPin, Bell, RotateCcw, ChevronRight, Truck, Check, X, User } from "lucide-react";
 import api, { inr, apiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -8,6 +8,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const STATUS_COLORS = {
   placed: "bg-blue-100 text-blue-700", confirmed: "bg-indigo-100 text-indigo-700",
@@ -21,6 +23,7 @@ function StatusBadge({ status }) {
 
 function SideNav() {
   const items = [
+    ["/account/profile", "Profile", User]
     ["/account/orders", "My Orders", Package],
     ["/account/wishlist", "Wishlist", Heart],
     ["/account/returns", "Returns", RotateCcw],
@@ -39,6 +42,82 @@ function SideNav() {
     </aside>
   );
 }
+function Profile() {
+  const { user } = useAuth();
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.put("/auth/profile", { name, email, phone });
+      toast.success("Profile successfully update ho gaya!");
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-card p-6 rounded-2xl border border-border max-w-xl space-y-4">
+      <div>
+        <h2 className="text-lg font-bold">Profile Details</h2>
+        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update karein</p>
+      </div>
+
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div>
+          <Label>Full Name</Label>
+          <Input 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            placeholder="Aapka Name" 
+            required 
+          />
+        </div>
+
+        <div>
+          <Label>Email Address</Label>
+          <Input 
+            type="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            placeholder="name@example.com" 
+            required 
+          />
+        </div>
+
+        <div>
+          <Label>Phone Number</Label>
+          <Input 
+            type="tel" 
+            value={phone} 
+            onChange={(e) => setPhone(e.target.value)} 
+            placeholder="Mobile number" 
+          />
+        </div>
+
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+          {loading ? "Updating..." : "Save Changes"}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 
 function Orders() {
   const [orders, setOrders] = useState(null);
@@ -213,6 +292,7 @@ export default function Account() {
         <div className="min-w-0 flex-1">
           <Routes>
             <Route index element={<Orders />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="orders" element={<Orders />} />
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="wishlist" element={<Wishlist />} />
