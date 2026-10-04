@@ -531,21 +531,22 @@ export default function AdminDashboard() {
               ))}
             </nav>
           </div>
-          <div className="p-4 sm:p-6">
-            <Routes>
-              <Route index element={<Overview />} />
-              <Route path="sellers" element={<Sellers />} />
-              <Route path="products" element={<ProductApprovals />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="customers" element={<CustomerManager />} /
-              <Route path="coupons" element={<Coupons />} />
-              <Route path="banners" element={<Banners />} />
-              <Route path="reviews" element={<Reviews />} />
-              <Route path="returns" element={<Returns />} />
-              <Route path="payouts" element={<DataTable url="/admin/payouts" testId="payouts-table" columns={[{ key: "seller", label: "Seller" }, { key: "amount", label: "Amount" }, { key: "status", label: "Status" }, { key: "created_at", label: "Date" }]} />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Routes>
+                  <div className="p-4 sm:p-6">
+          <Routes>
+            <Route index element={<Overview />}
+            <Route path="sellers" element={<Sellers />}
+            <Route path="products" element={<ProductApprovals />}
+            <Route path="categories" element={<Categories />}
+            <Route path="orders" element={<AdminOrders />}
+            <Route path="customers" element={<CustomerManager />}
+            <Route path="coupons" element={<Coupons />}
+            <Route path="banners" element={<Banners />}
+            <Route path="reviews" element={<Reviews />}
+            <Route path="returns" element={<Returns />}
+            <Route path="payouts" element={<DataTable url="/admin/payouts" />}
+            <Route path="settings" element={<AdminSettings />}
+          </Routes>
+              
           </div>
         </main>
       </div>
