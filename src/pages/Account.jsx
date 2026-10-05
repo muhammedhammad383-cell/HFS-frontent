@@ -134,9 +134,16 @@ function Profile() {
 
 function Orders() {
   const [orders, setOrders] = useState(null);
-  useEffect(() => { api.get("/orders").then((res) => setOrders(Array.isArray(res) ? res : (res?.data || []))).catch(() => setOrders([])); }, []);
+  useEffect(() => {
+    api.get("/orders")
+      .then((res) => {
+        const data = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+        setOrders(data);
+      })
+      .catch(() => setOrders([]));
+  }, []);
   if (!orders) return <Loader />;
-  if (!orders.length) return <EmptyState icon={Package} title="No orders yet" cta="Start Shopping" to="/products" />;
+  if (orders.length === 0) return <EmptyState icon={Package} title="No orders yet" cta="Start Shopping" to="/products" />;
   return (
     <div className="space-y-3">
       {orders.map((o) => (
@@ -279,9 +286,17 @@ function Returns() {
 
 function Notifications() {
   const [items, setItems] = useState(null);
-  useEffect(() => { api.get("/notifications").then((res) => setItems(Array.isArray(res) ? res : (res?.data || []))).catch(() => setItems([])); api.post("/notifications/read-all"); }, []);
+  useEffect(() => {
+    api.get("/notifications")
+      .then((res) => {
+        const data = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+        setItems(data);
+      })
+      .catch(() => setItems([]));
+    api.post("/notifications/read-all").catch(() => {});
+  }, []);
   if (!items) return <Loader />;
-  if (!items.length) return <EmptyState icon={Bell} title="No notifications yet" cta="Go Home" to="/" />;
+  if (items.length === 0) return <EmptyState icon={Bell} title="No notifications yet" cta="Go Home" to="/" />;
   return (
     <div className="space-y-2">
       {items.map((n) => (
