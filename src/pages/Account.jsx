@@ -195,12 +195,12 @@ function OrderDetail() {
             {steps.map((s, i) => (
               <React.Fragment key={s}>
                 <div className="flex flex-col items-center gap-1">
-                  <div className={`grid h-9 w-9 place-items-center rounded-full ${i <= curIdx ? "bg-trust text-white" : "bg-secondary text-muted-foreground"}`}>
+                  <div className={"grid h-9 w-9 place-items-center rounded-full " + (i <= curIdx ? "bg-trust text-white" : "bg-secondary text-muted-foreground")}>
                     {i <= curIdx ? <Check className="h-4 w-4" /> : i + 1}
                   </div>
                   <span className="text-[11px] font-medium capitalize text-slate-600">{s}</span>
                 </div>
-                {i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < curIdx ? "bg-trust" : "bg-secondary"}`} />}
+                {i < steps.length - 1 && <div className={"h-0.5 flex-1 " + (i < curIdx ? "bg-trust" : "bg-secondary")} />}
               </React.Fragment>
             ))}
           </div>
