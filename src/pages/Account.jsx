@@ -11,6 +11,19 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const Loader = () => <div className="grid h-40 place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" /></div>;
+const Info = ({ label, value }) => <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-medium text-slate-800">{value}</p></div>;
+const Row = ({ label, value, bold }) => <div className={`flex justify-between py-1 text-sm ${bold ? "border-t border-border pt-2 font-bold text-slate-900" : "text-slate-600"}`}><span>{label}</span><span>{value}</span></div>;
+function EmptyState({ icon: Icon, title, cta, to }) {
+  return (
+    <div className="grid place-items-center rounded-2xl border border-dashed border-border py-20 text-center">
+      <Icon className="h-12 w-12 text-muted-foreground" />
+      <p className="mt-3 font-heading text-lg font-bold text-slate-900">{title}</p>
+      <Link to={to}><Button className="mt-4 rounded-xl bg-brand text-white hover:bg-brand-dark">{cta}</Button></Link>
+    </div>
+  );
+}
+
 const STATUS_COLORS = {
   placed: "bg-blue-100 text-blue-700", confirmed: "bg-indigo-100 text-indigo-700",
   shipped: "bg-amber-100 text-amber-700", delivered: "bg-green-100 text-green-700",
@@ -305,15 +318,3 @@ export default function Account() {
   );
 }
 
-const Loader = () => <div className="grid h-40 place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" /></div>;
-const Info = ({ label, value }) => <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-medium text-slate-800">{value}</p></div>;
-const Row = ({ label, value, bold }) => <div className={`flex justify-between py-1 text-sm ${bold ? "border-t border-border pt-2 font-bold text-slate-900" : "text-slate-600"}`}><span>{label}</span><span>{value}</span></div>;
-function EmptyState({ icon: Icon, title, cta, to }) {
-  return (
-    <div className="grid place-items-center rounded-2xl border border-dashed border-border py-20 text-center">
-      <Icon className="h-12 w-12 text-muted-foreground" />
-      <p className="mt-3 font-heading text-lg font-bold text-slate-900">{title}</p>
-      <Link to={to}><Button className="mt-4 rounded-xl bg-brand text-white hover:bg-brand-dark">{cta}</Button></Link>
-    </div>
-  );
-}
