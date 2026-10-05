@@ -186,7 +186,12 @@ function OrderDetail() {
       <button onClick={() => navigate("/account/orders")} className="text-sm font-semibold text-brand-dark">← All orders</button>
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div><h2 className="font-heading text-xl font-bold text-slate-900">{o.order_number}</h2><p className="text-sm text-muted-foreground">Placed on {new Date(o.created_at).toLocaleString("en-IN")}</p></div>
+          <div>
+              <h2 className="font-heading text-xl font-bold text-slate-900">{o.order_number}</h2>
+              <p className="text-sm text-muted-foreground">
+                Placed on {new Date(o.created_at).toLocaleDateString("en-IN")}
+              </p>
+            </div>
           <StatusBadge status={o.status} />
         </div>
 
