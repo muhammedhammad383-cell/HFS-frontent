@@ -14,7 +14,16 @@ export function ProtectedRoute({ children, roles }) {
     );
   }
 
-  if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  if (roles && roles.length > 0) {
+    const userRole = user?.role || "customer";
+    if (!roles.includes(userRole)) {
+      return <Navigate to="/" replace />;
+    }
+  }
+
   return children;
 }
