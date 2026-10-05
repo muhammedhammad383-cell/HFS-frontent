@@ -165,7 +165,7 @@ function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [o, setO] = useState(null);
-  const load = () => api.get(`/orders/${id}`).then((res) => { const data = Array.isArray(res) ? res : (res?.data || []);  setO(data));
+  const load = () => api.get(`/orders/${id}`).then((res) => { const data = Array.isArray(res) ? res : (res?.data || []); setO(data); });
   useEffect(() => { load(); }, [id]);
   if (!o) return <Loader />;
 
