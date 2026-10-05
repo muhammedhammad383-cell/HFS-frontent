@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+const Loader = () => <div className="grid h-40 place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" /></div>;
+
 function Stat({ icon: Icon, label, value, accent }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
@@ -553,4 +555,3 @@ export default function AdminDashboard() {
   );
 }
 
-const Loader = () => <div className="grid h-40 place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" /></div>;
