@@ -42,6 +42,7 @@ function App() {
             <Route path="/page/:slug" element={<LegalPage />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<ProtectedRoute roles={["customer"]}><Checkout /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute roles={["customer"]}><Account /></ProtectedRoute>} />
             <Route path="/account/*" element={<ProtectedRoute roles={["customer"]}><Account /></ProtectedRoute>} />
           </Route>
 
@@ -51,7 +52,9 @@ function App() {
           <Route path="/seller/register" element={<SellerRegister />} />
 
           {/* Dashboards */}
+          <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
           <Route path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
