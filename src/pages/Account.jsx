@@ -134,7 +134,7 @@ function Profile() {
 
 function Orders() {
   const [orders, setOrders] = useState(null);
-  useEffect(() => { api.get("/orders").then(({ data }) => setOrders(data)); }, []);
+  useEffect(() => { api.get("/orders").then((res) => setOrders(Array.isArray(res) ? res : (res?.data || []))).catch(() => setOrders([])); }, []);
   if (!orders) return <Loader />;
   if (!orders.length) return <EmptyState icon={Package} title="No orders yet" cta="Start Shopping" to="/products" />;
   return (
@@ -158,7 +158,7 @@ function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [o, setO] = useState(null);
-  const load = () => api.get(`/orders/${id}`).then(({ data }) => setO(data));
+  const load = () => api.get(`/orders/${id}`).then((res) => { const data = Array.isArray(res) ? res : (res?.data || []);  setO(data));
   useEffect(() => { load(); }, [id]);
   if (!o) return <Loader />;
 
@@ -262,7 +262,7 @@ function Wishlist() {
 
 function Returns() {
   const [returns, setReturns] = useState(null);
-  useEffect(() => { api.get("/returns").then(({ data }) => setReturns(data)); }, []);
+  useEffect(() => { api.get("/returns").then((res) => { const data = Array.isArray(res) ? res : (res?.data || []);  setReturns(data)); }, []);
   if (!returns) return <Loader />;
   if (!returns.length) return <EmptyState icon={RotateCcw} title="No return requests" cta="View Orders" to="/account/orders" />;
   return (
@@ -279,7 +279,7 @@ function Returns() {
 
 function Notifications() {
   const [items, setItems] = useState(null);
-  useEffect(() => { api.get("/notifications").then(({ data }) => setItems(data)); api.post("/notifications/read-all"); }, []);
+  useEffect(() => { api.get("/notifications").then((res) => setItems(Array.isArray(res) ? res : (res?.data || []))).catch(() => setItems([])); api.post("/notifications/read-all"); }, []);
   if (!items) return <Loader />;
   if (!items.length) return <EmptyState icon={Bell} title="No notifications yet" cta="Go Home" to="/" />;
   return (
