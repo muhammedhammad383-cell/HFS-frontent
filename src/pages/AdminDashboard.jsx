@@ -3,7 +3,7 @@ import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Store, Package, Tags, ShoppingCart, Ticket, Star, RotateCcw,
   Image, Settings, LogOut, Check, X, Trash2, Ban, IndianRupee, TrendingUp, Clock
-} from "lucide-react";
+, Wallet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import api, { inr, apiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
