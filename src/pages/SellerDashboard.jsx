@@ -336,7 +336,12 @@ function SellerOrders() {
 
 function StoreSettings() {
   const { user, refresh } = useAuth();
-  const [f, setF] = useState({ name: user?.store?.name || "", description: user?.store?.description || "", logo: "" });
+  const [f, setF] = useState({
+    name: user?.store?.name || "",
+    description: user?.store?.description || "",
+    logo: user?.store?.logo || "",
+    pickup_address: user?.store?.pickup_address || { name: "", phone: "", address: "", city: "", state: "", pincode: "" }
+  });
   const save = async () => { try { await api.put("/seller/store", f); toast.success("Store updated"); refresh(); } catch (e) { toast.error(apiError(e)); } };
   return (
     <div className="max-w-lg rounded-2xl border border-border bg-card p-6">
