@@ -35,25 +35,34 @@ function StatusBadge({ status }) {
 }
 
 function SideNav() {
-  const items = [
-    ["/account/profile", "Profile", User]
-    ["/account/orders", "My Orders", Package],
-    ["/account/wishlist", "Wishlist", Heart],
-    ["/account/returns", "Returns", RotateCcw],
-    ["/account/notifications", "Notifications", Bell],
+  const navItems = [
+    { to: "/account/profile", label: "Profile", Icon: User },
+    { to: "/account/orders", label: "My Orders", Icon: Package },
+    { to: "/account/wishlist", label: "Wishlist", Icon: Heart },
+    { to: "/account/returns", label: "Returns", Icon: RotateCcw },
+    { to: "/account/notifications", label: "Notifications", Icon: Bell },
   ];
   return (
     <aside className="w-full lg:w-56 lg:shrink-0">
       <div className="flex gap-2 overflow-auto rounded-2xl border border-border bg-card p-2 no-scrollbar lg:flex-col">
-        {items.map((item) => {
-            const to = item[0], label = item[1], Icon = item[2];
-            return (
-          <NavLink key={to} to={to} data-testid={`acc-nav-${label.toLowerCase().replace(" ", "-")}`}
-            className={({ isActive }) => `flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-brand text-white" : "text-slate-600 hover:bg-secondary"}`}>
-            <Icon className="h-4 w-4" /> {label}
-          </NavLink>
-            );
-          })}
+        {navItems.map((item) => {
+          if (!item) return null;
+          const { to, label, Icon } = item;
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              data-testid={`acc-nav-${label.toLowerCase().replace(" ", "-")}`}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                  isActive ? "bg-brand text-white" : "text-slate-600 hover:bg-secondary"
+                }`
+              }
+            >
+              {Icon && <Icon className="h-4 w-4" />} {label}
+            </NavLink>
+          );
+        })}
       </div>
     </aside>
   );
