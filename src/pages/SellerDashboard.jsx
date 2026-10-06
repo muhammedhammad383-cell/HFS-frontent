@@ -31,6 +31,12 @@ function SellerProfile() {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
+  const [pickup, setPickup] = useState(user?.pickup_address || {
+    address: "",
+    city: "",
+    state: "",
+    pincode: ""
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,6 +44,7 @@ function SellerProfile() {
       setName(user.name || "");
       setEmail(user.email || "");
       setPhone(user.phone || "");
+      if (user.pickup_address) setPickup(user.pickup_address);
     }
   }, [user]);
 
@@ -45,7 +52,7 @@ function SellerProfile() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.put("/auth/profile", { name, email, phone });
+      await api.put("/auth/profile", { name, email, phone, pickup_address: pickup });
       toast.success("Seller profile successfully update ho gayi!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
