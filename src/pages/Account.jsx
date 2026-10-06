@@ -151,11 +151,11 @@ function Orders() {
     <div className="space-y-3">
       {orders.map((o) => (
         <Link key={o.id} to={`/account/orders/${o.id}`} data-testid={`order-row-${o.id}`} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary"><img src={o.items[0]?.image} alt="" className="h-full w-full object-cover" /></div>
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-secondary"><img src={o.items?.[0]?.image || "/placeholder.png"} alt="" className="h-full w-full object-cover" /></div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2"><span className="font-heading font-bold text-slate-900">{o.order_number}</span><StatusBadge status={o.status} /></div>
-            <p className="line-clamp-1 text-sm text-slate-600">{o.items.map((i) => i.name).join(", ")}</p>
-            <p className="text-xs text-muted-foreground">{o.items.length} item(s) · {new Date(o.created_at).toLocaleDateString("en-IN")}</p>
+            <p className="line-clamp-1 text-sm text-slate-600">{(o.items || []).map((i) => i?.name || "").join(", ")}</p>
+            <p className="text-xs text-muted-foreground">{(o.items || []).length} item(s) · {new Date(o.created_at).toLocaleDateString("en-IN")}</p>
           </div>
           <div className="text-right"><p className="font-bold text-slate-900">{inr(o.total)}</p><ChevronRight className="ml-auto h-5 w-5 text-muted-foreground" /></div>
         </Link>
