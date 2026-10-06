@@ -467,6 +467,62 @@ function AdminSettings() {
           <div><Label>Free Delivery Above (₹)</Label><Input type="number" value={s.free_delivery_above} onChange={(e) => setS({ ...s, free_delivery_above: e.target.value })} className="mt-1" /></div>
         </div>
       </div>
+      
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="mb-4 font-heading font-bold text-slate-900">Seller Pickup / Warehouse Address</h3>
+        <p className="mb-4 text-xs text-muted-foreground">Shiprocket courier pickup location details.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Warehouse / Sender Name</Label>
+            <Input 
+              value={s?.pickup_address?.name || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), name: e.target.value } })} 
+              placeholder="e.g. HFS Bazaar Warehouse" 
+            />
+          </div>
+          <div>
+            <Label>Contact Phone</Label>
+            <Input 
+              value={s?.pickup_address?.phone || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), phone: e.target.value } })} 
+              placeholder="10 digit phone number" 
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Address Line</Label>
+            <Input 
+              value={s?.pickup_address?.address || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), address: e.target.value } })} 
+              placeholder="Shop / Building / Street address" 
+            />
+          </div>
+          <div>
+            <Label>City</Label>
+            <Input 
+              value={s?.pickup_address?.city || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), city: e.target.value } })} 
+              placeholder="City" 
+            />
+          </div>
+          <div>
+            <Label>State</Label>
+            <Input 
+              value={s?.pickup_address?.state || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), state: e.target.value } })} 
+              placeholder="State" 
+            />
+          </div>
+          <div>
+            <Label>Pincode</Label>
+            <Input 
+              value={s?.pickup_address?.pincode || ""} 
+              onChange={(e) => setS({ ...s, pickup_address: { ...(s.pickup_address || {}), pincode: e.target.value } })} 
+              placeholder="Pincode" 
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-card p-6">
         <h3 className="mb-4 font-heading font-bold text-slate-900">Payment Settings</h3>
         <div className="space-y-3">
