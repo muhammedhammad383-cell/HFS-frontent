@@ -14,7 +14,24 @@ export default function Checkout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [settings, setSettings] = useState({ cod_enabled: true, razorpay_enabled: true, cashfree_enabled: true });
-  const [addr, setAddr] = useState({ full_name: user?.name || "", mobile: user?.phone || "", pincode: "", state: "", city: "", address_line: "", landmark: "" });
+  const [addr, setAddr] = useState(() => {
+    try {
+      const saved = localStorage.getItem("hfs_saved_address");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          full_name: parsed.full_name || user?.name || "",
+          mobile: parsed.mobile || user?.phone || "",
+          pincode: parsed.pincode || "",
+          state: parsed.state || "",
+          city: parsed.city || "",
+          address_line: parsed.address_line || "",
+          landmark: parsed.landmark || ""
+        };
+      }
+    } catch (e) {}
+    return { full_name: user?.name || "", mobile: user?.phone || "", pincode: "", state: "", city: "", address_line: "", landmark: "" };
+  });
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState("");
@@ -45,6 +62,7 @@ export default function Checkout() {
   const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && addr.address_line;
 
     const placeOrder = async () => {
+    try { localStorage.setItem("hfs_saved_address", JSON.stringify(addr)); } catch (e) {}
     if (!validAddr) return toast.error("Please fill all required address fields");
     setPlacing(true);
     try {
