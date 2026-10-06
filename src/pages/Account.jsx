@@ -274,7 +274,7 @@ function Wishlist() {
 
 function Returns() {
   const [returns, setReturns] = useState(null);
-  useEffect(() => { api.get("/returns").then((res) => { const data = Array.isArray(res) ? res : (res?.data || []);  setReturns(data)); }, []);
+  useEffect(() => { api.get("/returns").then((res) => { const data = Array.isArray(res) ? res : (res?.data || []); setReturns(data); }); }, []);
   if (!returns) return <Loader />;
   if (!returns.length) return <EmptyState icon={RotateCcw} title="No return requests" cta="View Orders" to="/account/orders" />;
   return (
