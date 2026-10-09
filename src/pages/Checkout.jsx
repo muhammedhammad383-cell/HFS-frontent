@@ -17,21 +17,38 @@ export default function Checkout() {
   const [addr, setAddr] = useState(() => {
     try {
       const saved = localStorage.getItem("hfs_saved_address");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          full_name: parsed.full_name || user?.name || "",
-          mobile: parsed.mobile || user?.phone || "",
-          pincode: parsed.pincode || "",
-          state: parsed.state || "",
-          city: parsed.city || "",
-          address_line: parsed.address_line || "",
-          landmark: parsed.landmark || ""
-        };
-      }
+      const uAddr = user?.address || {};
+      const parsed = saved ? JSON.parse(saved) : {};
+      return {
+        full_name: parsed.full_name || parsed.name || uAddr.name || user?.name || "",
+        mobile: parsed.mobile || parsed.phone || uAddr.phone || user?.phone || "",
+        pincode: parsed.pincode || uAddr.pincode || "",
+        state: parsed.state || uAddr.state || "",
+        city: parsed.city || uAddr.city || "",
+        address_line: parsed.address_line || parsed.address || uAddr.address || "",
+        landmark: parsed.landmark || uAddr.landmark || ""
+      };
     } catch (e) {}
     return { full_name: user?.name || "", mobile: user?.phone || "", pincode: "", state: "", city: "", address_line: "", landmark: "" };
   });
+
+  // User load hone par automatic address pre-fill
+  useEffect(() => {
+    if (user) {
+      setAddr((prev) => {
+        const uAddr = user.address || {};
+        return {
+          full_name: prev.full_name || uAddr.name || user.name || "",
+          mobile: prev.mobile || uAddr.phone || user.phone || "",
+          pincode: prev.pincode || uAddr.pincode || "",
+          state: prev.state || uAddr.state || "",
+          city: prev.city || uAddr.city || "",
+          address_line: prev.address_line || uAddr.address || "",
+          landmark: prev.landmark || uAddr.landmark || ""
+        };
+      });
+    }
+  }, [user]);
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState("");
