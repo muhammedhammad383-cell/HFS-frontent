@@ -39,10 +39,11 @@ function printInvoice(order) {
     <div class="header">
       <div>
         <div class="brand">HFS Bazaar</div>
+        <div style="font-size: 12px; color: #444; margin-top: 2px;">MSME / Udyam: UDYAM-MH-19-0412505</div>
         <div style="font-size: 13px; color: #666;">Store & Living Organizers</div>
       </div>
       <div class="inv-title">
-        TAX INVOICE
+        RETAIL INVOICE
         <div style="font-size: 13px; font-weight: normal;">Order #: ${order.order_number || order.id}</div>
         <div style="font-size: 13px; font-weight: normal;">Date: ${new Date(order.created_at || Date.now()).toLocaleDateString('en-IN')}</div>
       </div>
