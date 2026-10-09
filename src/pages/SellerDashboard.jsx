@@ -347,6 +347,7 @@ function StoreSettings() {
     name: user?.store?.name || "",
     description: user?.store?.description || "",
     logo: user?.store?.logo || "",
+    shiprocket_pickup_name: user?.store?.shiprocket_pickup_name || "",
     pickup_address: user?.store?.pickup_address || { name: "", phone: "", address: "", city: "", state: "", pincode: "" }
   });
   const save = async () => { try { await api.put("/seller/store", f); toast.success("Store updated"); refresh(); } catch (e) { toast.error(apiError(e)); } };
@@ -356,6 +357,7 @@ function StoreSettings() {
       <div className="space-y-4">
         <div><Label>Store Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="mt-1" data-testid="store-name-input" /></div>
         <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} className="mt-1" data-testid="store-desc-input" /></div>
+        <div><Label>Shiprocket Pickup Nickname</Label><Input value={f.shiprocket_pickup_name || ""} onChange={(e) => setF({ ...f, shiprocket_pickup_name: e.target.value })} placeholder="e.g. Primary" className="mt-1" /></div>
         <Button onClick={save} className="rounded-xl bg-brand text-white hover:bg-brand-dark" data-testid="save-store-btn">Save Changes</Button>
       </div>
     </div>
