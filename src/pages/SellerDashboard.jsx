@@ -357,7 +357,61 @@ function StoreSettings() {
       <div className="space-y-4">
         <div><Label>Store Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="mt-1" data-testid="store-name-input" /></div>
         <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} className="mt-1" data-testid="store-desc-input" /></div>
-        <div><Label>Shiprocket Pickup Nickname</Label><Input value={f.shiprocket_pickup_name || ""} onChange={(e) => setF({ ...f, shiprocket_pickup_name: e.target.value })} placeholder="e.g. Primary" className="mt-1" /></div>
+         <div className="space-y-3 pt-2 border-t border-slate-200">
+          <p className="font-semibold text-sm text-slate-800">Warehouse / Pickup Address (Auto-Shiprocket)</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Contact Person</Label>
+              <Input 
+                value={f.pickup_address?.name || ""} 
+                onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, name: e.target.value } })} 
+                placeholder="Name" 
+              />
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input 
+                value={f.pickup_address?.phone || ""} 
+                onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, phone: e.target.value } })} 
+                placeholder="10-digit Mobile" 
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Address (Gala / Shop / Building)</Label>
+            <Input 
+              value={f.pickup_address?.address || ""} 
+              onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, address: e.target.value } })} 
+              placeholder="Shop No, Area, Road" 
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label>City</Label>
+              <Input 
+                value={f.pickup_address?.city || ""} 
+                onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, city: e.target.value } })} 
+                placeholder="City" 
+              />
+            </div>
+            <div>
+              <Label>State</Label>
+              <Input 
+                value={f.pickup_address?.state || ""} 
+                onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, state: e.target.value } })} 
+                placeholder="State" 
+              />
+            </div>
+            <div>
+              <Label>Pincode</Label>
+              <Input 
+                value={f.pickup_address?.pincode || ""} 
+                onChange={(e) => setF({ ...f, pickup_address: { ...f.pickup_address, pincode: e.target.value } })} 
+                placeholder="Pincode" 
+              />
+            </div>
+          </div>
+        </div>
         <Button onClick={save} className="rounded-xl bg-brand text-white hover:bg-brand-dark" data-testid="save-store-btn">Save Changes</Button>
       </div>
     </div>
