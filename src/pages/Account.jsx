@@ -1,3 +1,94 @@
+
+function printInvoice(order) {
+  const itemsHtml = (order.items || []).map((it, idx) => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd;">${idx + 1}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd;">${it.name || 'Product'}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${it.qty || 1}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">₹${(it.price || 0).toLocaleString()}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">₹${((it.price || 0) * (it.qty || 1)).toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  const addr = order.address || {};
+  const addrStr = [addr.address || addr.address_line, addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ');
+
+  const html = `
+  <html>
+  <head>
+    <title>Invoice - ${order.order_number || order.id}</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #111; max-width: 800px; margin: 0 auto; }
+      .header { display: flex; justify-content: space-between; border-bottom: 2px solid #222; padding-bottom: 16px; margin-bottom: 20px; }
+      .brand { font-size: 24px; font-weight: bold; }
+      .inv-title { font-size: 20px; text-align: right; font-weight: 600; color: #444; }
+      .details-grid { display: flex; justify-content: space-between; margin-bottom: 24px; font-size: 14px; line-height: 1.5; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; }
+      th { background: #f4f4f5; padding: 8px; text-align: left; border-bottom: 2px solid #ddd; }
+      .total-box { margin-left: auto; width: 280px; font-size: 14px; line-height: 1.8; }
+      .total-row { display: flex; justify-content: space-between; }
+      .grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid #222; padding-top: 6px; margin-top: 6px; }
+      .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 16px; }
+      @media print { .no-print { display: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="no-print" style="text-align: right; margin-bottom: 16px;">
+      <button onclick="window.print()" style="padding: 8px 16px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Print / Save as PDF</button>
+    </div>
+    <div class="header">
+      <div>
+        <div class="brand">HFS Bazaar</div>
+        <div style="font-size: 13px; color: #666;">Store & Living Organizers</div>
+      </div>
+      <div class="inv-title">
+        TAX INVOICE
+        <div style="font-size: 13px; font-weight: normal;">Order #: ${order.order_number || order.id}</div>
+        <div style="font-size: 13px; font-weight: normal;">Date: ${new Date(order.created_at || Date.now()).toLocaleDateString('en-IN')}</div>
+      </div>
+    </div>
+    <div class="details-grid">
+      <div>
+        <strong>Billed / Delivered To:</strong><br/>
+        ${order.customer_name || addr.name || 'Customer'}<br/>
+        ${addrStr || 'N/A'}<br/>
+        Phone: ${addr.phone || order.phone || 'N/A'}
+      </div>
+      <div style="text-align: right;">
+        <strong>Payment Method:</strong> ${(order.payment_method || 'COD').toUpperCase()}<br/>
+        <strong>Status:</strong> ${(order.status || 'Placed').toUpperCase()}
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th style="text-align: center;">Qty</th>
+          <th style="text-align: right;">Price</th>
+          <th style="text-align: right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+    <div class="total-box">
+      <div class="total-row"><span>Subtotal:</span><span>₹${(order.subtotal || order.total || 0).toLocaleString()}</span></div>
+      ${order.discount ? `<div class="total-row"><span>Discount:</span><span>-₹${order.discount.toLocaleString()}</span></div>` : ''}
+      <div class="total-row"><span>Delivery:</span><span>₹${(order.delivery_charge ?? (order.delivery || 0)).toLocaleString()}</span></div>
+      <div class="total-row grand-total"><span>Total Paid:</span><span>₹${(order.total || 0).toLocaleString()}</span></div>
+    </div>
+    <div class="footer">
+      Thank you for shopping with HFS Bazaar! For support, visit hfsbazaar.in
+    </div>
+  </body>
+  </html>
+  `;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate, useParams, NavLink } from "react-router-dom";
 import { Package, Heart, MapPin, Bell, RotateCcw, ChevronRight, Truck, Check, X, User } from "lucide-react";
@@ -199,7 +290,15 @@ function OrderDetail() {
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
+              <div className="flex flex-wrap items-center justify-between gap-3 w-full">
               <h2 className="font-heading text-xl font-bold text-slate-900">{o.order_number}</h2>
+              <button
+                onClick={() => printInvoice(o)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              >
+                Download Invoice
+              </button>
+            </div>
               <p className="text-sm text-muted-foreground">
                 Placed on {new Date(o.created_at).toLocaleDateString("en-IN")}
               </p>
