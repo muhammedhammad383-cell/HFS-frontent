@@ -1,0 +1,6 @@
+# HFS Bazaar
+
+> E-commerce marketplace for wardrobe storage, saree covers, and garment organizers.
+
+- [Homepage](https://www.hfsbazaar.in)
+- [Products](https://www.hfsbazaar.in/products)
