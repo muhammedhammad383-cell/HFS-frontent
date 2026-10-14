@@ -1,3 +1,4 @@
+import CancellationRefund from './pages/CancellationRefund';
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -56,7 +57,8 @@ function App() {
           <Route path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-        </Routes>
+                <Route path='/cancellation-refund' element={<CancellationRefund />} />
+      </Routes>
       </BrowserRouter>
     </div>
   );
