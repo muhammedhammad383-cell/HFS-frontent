@@ -1,33 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.28"/>
+    <!-- Deep Royal Emerald Background Gradient -->
+    <radialGradient id="emeraldBg" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#0F5243"/>
+      <stop offset="60%" stop-color="#07362C"/>
+      <stop offset="100%" stop-color="#031F19"/>
+    </radialGradient>
+
+    <!-- Metallic Champagne Gold Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F9E498"/>
+      <stop offset="30%" stop-color="#D4AF37"/>
+      <stop offset="50%" stop-color="#FFF3B0"/>
+      <stop offset="75%" stop-color="#AA7C11"/>
+      <stop offset="100%" stop-color="#E6C665"/>
+    </linearGradient>
+
+    <filter id="luxShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.45"/>
     </filter>
   </defs>
 
-  <!-- White Circular Base -->
-  <circle cx="256" cy="256" r="240" fill="#ffffff" filter="url(#dropShadow)"/>
+  <!-- Outer Gold Rim -->
+  <circle cx="256" cy="256" r="246" fill="url(#goldGrad)" filter="url(#luxShadow)"/>
+  
+  <!-- Main Emerald Luxury Circle -->
+  <circle cx="256" cy="256" r="232" fill="url(#emeraldBg)"/>
+  
+  <!-- Inner Fine Gold Accent Ring -->
+  <circle cx="256" cy="256" r="212" fill="none" stroke="url(#goldGrad)" stroke-width="3.5" stroke-dasharray="12 6" opacity="0.85"/>
+  <circle cx="256" cy="256" r="202" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.5"/>
 
-  <!-- 4-Color Outer Ring (Google/Custom Palette: Red, Yellow, Green, Blue) -->
-  <!-- Top Red Arc -->
-  <path d="M 99 99 A 222 222 0 0 1 413 99" fill="none" stroke="#EA4335" stroke-width="28" stroke-linecap="round"/>
-  <!-- Right Yellow Arc -->
-  <path d="M 413 99 A 222 222 0 0 1 413 413" fill="none" stroke="#FBBC05" stroke-width="28" stroke-linecap="round"/>
-  <!-- Bottom Green Arc -->
-  <path d="M 413 413 A 222 222 0 0 1 99 413" fill="none" stroke="#34A853" stroke-width="28" stroke-linecap="round"/>
-  <!-- Left Blue Arc -->
-  <path d="M 99 413 A 222 222 0 0 1 99 99" fill="none" stroke="#4285F4" stroke-width="28" stroke-linecap="round"/>
-
-  <!-- Stylized Green HFS Monogram & Text -->
-  <g filter="url(#dropShadow)">
-    <!-- Stylized HFS Script/Monogram -->
-    <text x="256" y="255" font-family="system-ui, -apple-system, sans-serif" font-size="145" font-weight="900" font-style="italic" fill="#2E9B3C" text-anchor="middle" letter-spacing="-4">HFS</text>
-    
-    <!-- BAZAAR Subtext -->
-    <text x="256" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="800" fill="#1E7E34" text-anchor="middle" letter-spacing="6">BAZAAR</text>
+  <!-- Top Golden Hanger / Roof Crest Icon (Symbolizing Wardrobe & Home Living) -->
+  <g filter="url(#luxShadow)">
+    <!-- Hook -->
+    <path d="M 256 95 C 256 72, 282 72, 282 90 C 282 103, 256 108, 256 122" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round"/>
+    <!-- Elegant Hanger/Roof Arch -->
+    <path d="M 140 165 L 256 120 L 372 165" fill="none" stroke="url(#goldGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Center Diamond Star -->
+    <polygon points="256,138 264,150 256,162 248,150" fill="url(#goldGrad)"/>
   </g>
 
-  <!-- Double Swoosh Underline (Yellow & Blue) -->
-  <path d="M 140 370 Q 260 335 405 320" fill="none" stroke="#FBBC05" stroke-width="16" stroke-linecap="round" filter="url(#dropShadow)"/>
-  <path d="M 165 398 Q 275 365 390 350" fill="none" stroke="#4285F4" stroke-width="14" stroke-linecap="round" filter="url(#dropShadow)"/>
+  <!-- Bold Luxury HFS Monogram -->
+  <g filter="url(#luxShadow)">
+    <text x="256" y="310" font-family="Georgia, 'Times New Roman', serif" font-size="148" font-weight="900" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="2">HFS</text>
+  </g>
+
+  <!-- Bottom Golden Ornamental Divider & BAZAAR -->
+  <path d="M 135 342 L 377 342" stroke="url(#goldGrad)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="256" cy="342" r="6" fill="url(#goldGrad)"/>
+
+  <text x="256" y="388" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="800" fill="#F9E498" text-anchor="middle" letter-spacing="14">BAZAAR</text>
 </svg>

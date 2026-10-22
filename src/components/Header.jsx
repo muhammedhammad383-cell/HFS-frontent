@@ -60,7 +60,10 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
-          <Link to="/" data-testid="logo-link" className="font-heading text-2xl font-extrabold tracking-tight text-slate-900"><div className="flex items-center gap-2"><img src="/logo.svg" alt="HFS" className="h-9 w-auto object-contain rounded-full" /><span className="font-extrabold text-xl tracking-tight text-gray-900">HFS BAZAAR</span></div></Link>
+          <Link to="/" data-testid="logo-link" className="font-heading text-2xl font-extrabold tracking-tight text-slate-900"><div className="flex items-center gap-2"><img src="/logo.svg" alt="HFS" className="h-10 w-10 object-contain rounded-full shadow-sm" /><div className="flex flex-col leading-none">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-gray-900">HFS BAZAAR</span>
+              <span className="text-[9px] font-bold tracking-[0.18em] text-amber-600 uppercase mt-0.5">STORE & LIVING</span>
+            </div></div></Link>
 
           <form onSubmit={submitSearch} className="relative ml-2 hidden flex-1 md:block">
             <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" size={18} />
