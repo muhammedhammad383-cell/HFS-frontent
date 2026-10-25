@@ -1,4 +1,3 @@
-import CancellationRefund from './pages/CancellationRefund';
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -10,7 +9,8 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import Login, { Register, SellerRegister } from "@/pages/Auth";
-import StorePage, { LegalPage } from "@/pages/StorePage";
+import StorePage from "@/pages/StorePage";
+import { LegalPage } from "@/pages/CompliancePages";
 import Account from "@/pages/Account";
 import SellerDashboard from "@/pages/SellerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -41,6 +41,12 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/store/:id" element={<StorePage />} />
             <Route path="/page/:slug" element={<LegalPage />} />
+            <Route path="/cancellation-refund" element={<LegalPage forcedSlug="returns" />} />
+            <Route path="/privacy-policy" element={<LegalPage forcedSlug="privacy" />} />
+            <Route path="/terms-and-conditions" element={<LegalPage forcedSlug="terms" />} />
+            <Route path="/shipping-policy" element={<LegalPage forcedSlug="shipping" />} />
+            <Route path="/contact-us" element={<LegalPage forcedSlug="contact" />} />
+            <Route path="/about-us" element={<LegalPage forcedSlug="about" />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<ProtectedRoute roles={["customer"]}><Checkout /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute roles={["customer"]}><Account /></ProtectedRoute>} />
@@ -57,8 +63,7 @@ function App() {
           <Route path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-                <Route path='/cancellation-refund' element={<CancellationRefund />} />
-      </Routes>
+        </Routes>
       </BrowserRouter>
     </div>
   );
