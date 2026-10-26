@@ -81,9 +81,7 @@ export default function ProductDetail() {
 
         {/* Info */}
         <div>
-          <Link to={`/store/${p.store_id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline">
-            <Store className="h-4 w-4" /> {p.store_name} {p.store?.verified && <Check className="h-3.5 w-3.5 text-trust" />}
-          </Link>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-dark">HFS BAZAAR Official</div>
           <h1 className="mt-1.5 font-heading text-2xl font-bold text-slate-900 sm:text-3xl">{p.name}</h1>
           <div className="mt-2 flex items-center gap-2">
             <span className="flex items-center gap-0.5 rounded bg-trust px-2 py-0.5 text-sm font-semibold text-white">{p.rating?.toFixed(1)} <Star className="h-3.5 w-3.5 fill-white" /></span>

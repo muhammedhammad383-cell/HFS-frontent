@@ -34,7 +34,6 @@ export default function Cart() {
               </Link>
               <div className="flex flex-1 flex-col">
                 <Link to={`/product/${it.product_id}`} className="line-clamp-2 font-semibold text-slate-900 hover:text-brand">{it.name}</Link>
-                <p className="text-xs text-muted-foreground">Sold by {it.store_name}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="font-bold text-slate-900">{inr(it.eff_price)}</span>
                   {it.sale_price && <span className="text-sm text-muted-foreground line-through">{inr(it.price)}</span>}

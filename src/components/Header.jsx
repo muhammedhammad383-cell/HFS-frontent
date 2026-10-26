@@ -26,7 +26,7 @@ export function Header() {
     navigate(`/products?search=${encodeURIComponent(q)}`);
   };
 
-  const dashboardLink = user?.role === "admin" ? "/admin" : user?.role === "seller" ? "/seller" : "/account";
+  const dashboardLink = user?.role === "admin" ? "/admin" : "/account";
 
   return (
     <header className="sticky top-0 z-40 w-full">
@@ -45,7 +45,7 @@ export function Header() {
             <SheetContent side="left" className="w-80">
               <SheetHeader>
                 <SheetTitle className="text-left font-heading text-xl font-extrabold">
-                  <span className="text-brand">HFS BAZAAR</span>BAG
+                  <span className="text-brand">HFS</span> BAZAAR
                 </SheetTitle>
               </SheetHeader>
               <nav className="mt-4 flex flex-col gap-1">
@@ -55,7 +55,6 @@ export function Header() {
                     {c.name}
                   </Link>
                 ))}
-                <Link to="/seller/register" className="mt-2 rounded-lg bg-accent px-3 py-2 font-medium text-brand-dark">Become a Seller</Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -77,11 +76,6 @@ export function Header() {
           </form>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
-            <Link to="/seller/register" data-testid="seller-register-link" className="hidden lg:block">
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-full border-brand/40 text-brand-dark hover:bg-accent">
-                <Store className="h-4 w-4" /> Sell on HFS
-              </Button>
-            </Link>
 
             {user && user.role === "customer" && (
               <Link to="/account/wishlist" data-testid="wishlist-link" className="relative hidden p-2 sm:block">

@@ -58,17 +58,7 @@ function FilterPanel({ cats, stores, filters, setFilters }) {
           In Stock Only
         </label>
       </div>
-      <div>
-        <h4 className="mb-2 font-heading text-sm font-bold text-slate-900">Seller</h4>
-        <div className="space-y-1.5">
-          {stores.map((s) => (
-            <label key={s.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-              <Checkbox checked={filters.seller === s.id} onCheckedChange={(v) => upd("seller", v ? s.id : "")} data-testid={`filter-seller-${s.id}`} />
-              {s.name}
-            </label>
-          ))}
-        </div>
-      </div>
+      
     </div>
   );
 }

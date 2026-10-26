@@ -39,7 +39,6 @@ export function ProductCard({ product }) {
         </div>
       </Link>
       <div className="flex flex-1 flex-col p-3.5">
-        <p className="text-xs font-medium text-brand-dark">{product.store_name}</p>
         <Link to={`/product/${product.id}`}>
           <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900 hover:text-brand">
             {product.name}

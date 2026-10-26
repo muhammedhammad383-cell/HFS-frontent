@@ -8,11 +8,9 @@ import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
-import Login, { Register, SellerRegister } from "@/pages/Auth";
-import StorePage from "@/pages/StorePage";
+import Login, { Register } from "@/pages/Auth";
 import { LegalPage } from "@/pages/CompliancePages";
 import Account from "@/pages/Account";
-import SellerDashboard from "@/pages/SellerDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 function StoreLayout() {
@@ -39,7 +37,6 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/category/:slug" element={<Products />} />
             <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/store/:id" element={<StorePage />} />
             <Route path="/page/:slug" element={<LegalPage />} />
             <Route path="/cancellation-refund" element={<LegalPage forcedSlug="returns" />} />
             <Route path="/privacy-policy" element={<LegalPage forcedSlug="privacy" />} />
@@ -56,11 +53,8 @@ function App() {
           {/* Auth */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/seller/register" element={<SellerRegister />} />
 
           {/* Dashboards */}
-          <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
-          <Route path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
         </Routes>

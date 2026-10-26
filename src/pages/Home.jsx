@@ -46,7 +46,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "HFS - Storage, Covers & Bags Marketplace";
+    document.title = "HFS BAZAAR - Saree Covers, Storage Bags & Organizers";
     Promise.all([
       api.get("/banners"),
       api.get("/categories"),
@@ -54,15 +54,13 @@ export default function Home() {
       api.get("/products?trending=true&limit=5"),
       api.get("/products?sort=newest&limit=5"),
       api.get("/products?sort=popularity&limit=5"),
-      api.get("/stores"),
-    ]).then(([b, c, f, t, n, bs, st]) => {
+    ]).then(([b, c, f, t, n, bs]) => {
       setBanners(b.data);
       setCats(c.data);
       setFeatured(f.data.products);
       setTrending(t.data.products);
       setNewArr(n.data.products);
       setBest(bs.data.products);
-      setStores(st.data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -77,7 +75,7 @@ export default function Home() {
     { icon: Truck, label: "Free Delivery", sub: "On orders ₹999+" },
     { icon: ShieldCheck, label: "Secure Payments", sub: "UPI, Cards, COD" },
     { icon: RotateCcw, label: "Easy Returns", sub: "7-day policy" },
-    { icon: BadgeIndianRupee, label: "Best Prices", sub: "Direct from sellers" },
+    { icon: BadgeIndianRupee, label: "Best Prices", sub: "Direct from HFS" },
   ];
 
   return (
@@ -145,23 +143,6 @@ export default function Home() {
       <Section title="Featured Products" to="/products?featured=true"><Rail products={featured} loading={loading} /></Section>
       <Section title="Trending Now" to="/products?trending=true"><Rail products={trending} loading={loading} /></Section>
       <Section title="New Arrivals" to="/products?sort=newest"><Rail products={newArr} loading={loading} /></Section>
-
-      {/* Sellers */}
-      <Section title="Featured Stores" subtitle="Trusted sellers on HFS" to="/products">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {stores.map((s) => (
-            <Link key={s.id} to={`/store/${s.id}`} data-testid={`store-${s.id}`} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-all hover:shadow-lg">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-slate-900 font-heading text-xl font-bold text-brand-light">{s.name?.[0]}</div>
-              <div className="min-w-0">
-                <p className="truncate font-heading font-bold text-slate-900">{s.name}</p>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 fill-brand text-brand" /> {s.rating} · {s.product_count} products
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </Section>
 
       {/* Reviews */}
       <Section title="What Our Customers Say">

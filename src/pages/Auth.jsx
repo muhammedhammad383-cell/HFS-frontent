@@ -26,7 +26,7 @@ export default function Login() {
     try {
       const u = await login(email, password);
       toast.success("Welcome back!");
-      const dest = location.state?.from || (u.role === "admin" ? "/admin" : u.role === "seller" ? "/seller" : "/");
+      const dest = location.state?.from || (u.role === "admin" ? "/admin" : "/");
       navigate(dest);
     } catch (err) { toast.error(apiError(err)); }
     finally { setLoading(false); }
@@ -135,7 +135,7 @@ export default function Login() {
     }
   
   return (
-    <AuthShell title="Welcome back" sub="Login to your HFSBAZAAR account">
+    <AuthShell title="Welcome back" sub="Login to your HFS BAZAAR account">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <Label>Email</Label>
@@ -160,11 +160,9 @@ export default function Login() {
         </Button>
       </form>
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        New to HFS? <Link to="/register" className="font-semibold text-brand-dark hover:underline">Create account</Link>
+        New to HFS BAZAAR? <Link to="/register" className="font-semibold text-brand-dark hover:underline">Create account</Link>
       </p>
-      <div className="mt-4 rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
-        <b>Demo:</b> customer@demo.com / Customer@123 · Seller: royalstorage@demo.com / Seller@123
-      </div>
+      
     </AuthShell>
   );
 }
@@ -248,7 +246,7 @@ function AuthShell({ title, sub, children, wide }) {
     <div className="mx-auto grid min-h-[80vh] max-w-7xl place-items-center px-4 py-10">
       <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-3xl border border-border bg-card p-8 shadow-sm`}>
         <div className="mb-6 text-center">
-          <Link to="/" className="font-heading text-2xl font-extrabold"><span className="text-brand">HFS</span>BAZAAR</Link>
+          <Link to="/" className="font-heading text-2xl font-extrabold"><span className="text-brand">HFS</span> BAZAAR</Link>
           <h1 className="mt-3 font-heading text-2xl font-bold text-slate-900">{title}</h1>
           <p className="text-sm text-muted-foreground">{sub}</p>
         </div>
