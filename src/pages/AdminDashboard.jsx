@@ -237,6 +237,55 @@ function Sellers() {
   if (!rows) return <Loader />;
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div>
+          <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
+          <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
+        </div>
+        <Button onClick={() => setShowAdd(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
+          + Add New Product
+        </Button>
+      </div>
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
+            <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Product Name</label>
+                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="e.g. Quilted Saree Cover" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Regular Price (₹)</label>
+                  <input required type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="999" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Sale Price (₹)</label>
+                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="599" value={form.sale_price} onChange={e => setForm({...form, sale_price: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Image URL</label>
+                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://..." value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Category</label>
+                <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Description</label>
+                <textarea className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" rows="2" placeholder="Product details..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowAdd(false)} className="text-xs">Cancel</Button>
+                <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {rows.map((s) => (
         <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4" data-testid={`admin-seller-${s.id}`}>
           <div className="grid h-11 w-11 place-items-center rounded-full bg-slate-900 font-bold text-brand-light">{s.name?.[0]}</div>
@@ -392,6 +441,55 @@ function AdminOrders() {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div>
+          <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
+          <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
+        </div>
+        <Button onClick={() => setShowAdd(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
+          + Add New Product
+        </Button>
+      </div>
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
+            <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Product Name</label>
+                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="e.g. Quilted Saree Cover" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Regular Price (₹)</label>
+                  <input required type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="999" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Sale Price (₹)</label>
+                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="599" value={form.sale_price} onChange={e => setForm({...form, sale_price: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Image URL</label>
+                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://..." value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Category</label>
+                <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700">Description</label>
+                <textarea className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" rows="2" placeholder="Product details..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowAdd(false)} className="text-xs">Cancel</Button>
+                <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {rows.map((o) => {
         const sh = o.shipment || {};
         const awb = sh.awb_code || sh.tracking_number || "";
