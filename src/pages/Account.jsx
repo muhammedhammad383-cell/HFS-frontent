@@ -324,24 +324,84 @@ function OrderDetail() {
         )}
       </div>
 
-      {o.shipment && (
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h3 className="mb-3 flex items-center gap-2 font-heading font-bold text-slate-900"><Truck className="h-5 w-5 text-brand" /> Shipment Details</h3>
-          <div className="grid gap-2 text-sm sm:grid-cols-2">
-            <Info label="Courier" value={o.shipment.courier_name} />
-            <Info label="AWB Number" value={o.shipment.awb_code} />
-            <Info label="Tracking Number" value={o.shipment.tracking_number} />
-            <Info label="Status" value={o.shipment.status?.replace("_", " ")} />
+      {(o.shipment || o.status === "shipped" || o.status === "delivered") && (() => {
+        const sh = o.shipment || {};
+        const awb = sh.awb_code || sh.tracking_number || "";
+        const trackUrl = sh.tracking_url || (awb ? `https://shiprocket.co/tracking/${awb}` : "");
+        return (
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="flex items-center gap-2 font-heading font-bold text-slate-900">
+                <Truck className="h-5 w-5 text-brand" /> Shipment & Live Tracking
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await api.get(`/orders/${o.id}/track`);
+                      if (typeof load === "function") load();
+                      else window.location.reload();
+                    } catch (e) {
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  🔄 Refresh Status
+                </Button>
+                {trackUrl && (
+                  <a
+                    href={trackUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center rounded-xl bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-brand-dark"
+                  >
+                    📍 Track Live Package ↗
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <Info label="Courier Partner" value={sh.courier_name || "Assigning courier partner..."} />
+              <Info label="AWB / Tracking No." value={awb || "Generating AWB..."} />
+              <Info label="Shipment Status" value={(sh.status || o.status || "processing").replace(/_/g, " ").toUpperCase()} />
+              {sh.edd && <Info label="Estimated Delivery" value={sh.edd} />}
+            </div>
+
+            {!awb && o.status !== "cancelled" && (
+              <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Your parcel is packed and ready for courier pickup. Live AWB tracking link will appear here as soon as the courier scans the package.
+              </p>
+            )}
+
+            {Array.isArray(sh.scans) && sh.scans.length > 0 && (
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Live Courier Updates</p>
+                <div className="space-y-2">
+                  {sh.scans.slice(0, 6).map((sc, idx) => (
+                    <div key={idx} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-xs">
+                      <span className="font-medium text-slate-800">
+                        {sc.activity || sc.status} {sc.location ? `• ${sc.location}` : ""}
+                      </span>
+                      <span className="text-slate-500">{sc.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="rounded-2xl border border-border bg-card p-6">
         <h3 className="mb-3 font-heading font-bold text-slate-900">Items</h3>
         {o.items.map((it) => (
           <div key={it.product_id} className="flex items-center gap-3 border-b border-border py-3 last:border-0">
             <div className="h-14 w-14 overflow-hidden rounded-lg bg-secondary"><img src={it.image} alt="" className="h-full w-full object-cover" /></div>
-            <div className="flex-1"><p className="line-clamp-1 font-medium text-slate-900">{it.name}</p><p className="text-xs text-muted-foreground">Qty {it.qty} · {it.store_name}</p></div>
+            <div className="flex-1"><p className="line-clamp-1 font-medium text-slate-900">{it.name}</p><p className="text-xs text-muted-foreground">Qty {it.qty}</p></div>
             <span className="font-semibold">{inr(it.line_total)}</span>
           </div>
         ))}

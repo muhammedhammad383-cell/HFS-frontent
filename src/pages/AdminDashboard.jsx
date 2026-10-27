@@ -325,21 +325,245 @@ function Categories() {
 
 function AdminOrders() {
   const [rows, setRows] = useState(null);
-  const load = () => api.get("/admin/orders").then(({ data }) => setRows(data));
+  const [openId, setOpenId] = useState(null);
+  const [forms, setForms] = useState({});
+  const [busyId, setBusyId] = useState(null);
+
+  const load = () =>
+    api.get("/admin/orders").then(({ data }) => {
+      setRows(data);
+      const init = {};
+      data.forEach((o) => {
+        const sh = o.shipment || {};
+        init[o.id] = {
+          courier_name: sh.courier_name || "",
+          awb_code: sh.awb_code || sh.tracking_number || "",
+          tracking_url: sh.tracking_url || "",
+          shipment_status: sh.status || "in_transit",
+        };
+      });
+      setForms(init);
+    });
+
   useEffect(() => { load(); }, []);
-  const setStatus = async (id, status) => { await api.put(`/admin/orders/${id}/status`, { status }); load(); };
+
+  const setStatus = async (id, status) => {
+    try {
+      await api.put(`/admin/orders/${id}/status`, { status });
+      toast.success(`Order marked ${status}`);
+      load();
+    } catch (e) {
+      toast.error(apiError(e));
+    }
+  };
+
+  const saveTracking = async (o) => {
+    setBusyId(o.id);
+    try {
+      const f = forms[o.id] || {};
+      await api.put(`/admin/orders/${o.id}/tracking`, f);
+      toast.success("Tracking & AWB details saved!");
+      await load();
+    } catch (e) {
+      toast.error(apiError(e));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const syncShiprocket = async (o) => {
+    setBusyId(o.id);
+    try {
+      const { data } = await api.post(`/admin/orders/${o.id}/sync-tracking`);
+      if (data?.shipment?.awb_code) {
+        toast.success(`Synced! AWB: ${data.shipment.awb_code} (${data.shipment.courier_name || "Courier"})`);
+      } else {
+        toast.info("Synced with Shiprocket — AWB not assigned on Shiprocket yet. Assign courier on Shiprocket or enter AWB manually below.");
+      }
+      await load();
+    } catch (e) {
+      toast.error(apiError(e));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (!rows) return <Loader />;
+
   return (
-    <div className="space-y-2">
-      {rows.map((o) => (
-        <div key={o.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
-          <div className="min-w-0 flex-1"><p className="font-heading font-bold text-slate-900">{o.order_number}</p><p className="text-xs text-muted-foreground">{o.customer_name} · {o.items.length} items · {inr(o.total)} · {o.payment_method.toUpperCase()}</p></div>
-          <Select value={o.status} onValueChange={(v) => setStatus(o.id, v)}>
-            <SelectTrigger className="w-40" data-testid={`admin-order-status-${o.id}`}><SelectValue /></SelectTrigger>
-            <SelectContent>{["placed", "confirmed", "shipped", "delivered", "cancelled"].map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      ))}
+    <div className="space-y-3">
+      {rows.map((o) => {
+        const sh = o.shipment || {};
+        const awb = sh.awb_code || sh.tracking_number || "";
+        const trackUrl = sh.tracking_url || (awb ? `https://shiprocket.co/tracking/${awb}` : "");
+        const f = forms[o.id] || { courier_name: "", awb_code: "", tracking_url: "", shipment_status: "in_transit" };
+        const isOpen = openId === o.id;
+        const addr = o.address || {};
+
+        return (
+          <div key={o.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setOpenId(isOpen ? null : o.id)}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-heading font-bold text-slate-900">{o.order_number}</p>
+                  {awb ? (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      AWB: {awb}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                      No AWB yet
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {o.customer_name} • {o.items?.length || 0} items • {inr(o.total)} • {(o.payment_method || "").toUpperCase()}
+                </p>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setOpenId(isOpen ? null : o.id)}
+                className="text-xs font-semibold"
+              >
+                {isOpen ? "Hide Track / Info" : "Track / Manage"}
+              </Button>
+
+              <Select value={o.status} onValueChange={(v) => setStatus(o.id, v)}>
+                <SelectTrigger className="w-36" data-testid={`admin-order-status-${o.id}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["placed", "confirmed", "shipped", "delivered", "cancelled"].map((s) => (
+                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {isOpen && (
+              <div className="mt-4 space-y-4 border-t border-border pt-4 text-sm">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl bg-secondary/40 p-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Delivery Address</p>
+                    <p className="mt-1 font-semibold text-slate-900">{addr.full_name || o.customer_name}</p>
+                    <p className="text-xs text-slate-700">{addr.address_line1 || addr.address} {addr.address_line2 || ""}</p>
+                    <p className="text-xs text-slate-700">{addr.city}, {addr.state} - {addr.pincode}</p>
+                    {addr.phone && <p className="mt-1 text-xs font-semibold text-slate-800">📞 {addr.phone}</p>}
+                  </div>
+
+                  <div className="rounded-xl bg-secondary/40 p-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ordered Items</p>
+                    <div className="mt-1 space-y-1">
+                      {(o.items || []).map((it, idx) => (
+                        <p key={idx} className="text-xs text-slate-800">
+                          • {it.name} × <strong>{it.qty}</strong> ({inr(it.line_total || it.price * it.qty)})
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-heading text-sm font-bold text-slate-900">🚚 Shipment & Live Tracking</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busyId === o.id}
+                        onClick={() => syncShiprocket(o)}
+                        className="text-xs"
+                      >
+                        {busyId === o.id ? "Syncing..." : "🔄 Sync from Shiprocket"}
+                      </Button>
+                      {trackUrl && (
+                        <a
+                          href={trackUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                        >
+                          📍 Open Live Tracking ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <Label className="text-xs">Courier Name</Label>
+                      <Input
+                        placeholder="e.g. Delhivery / Xpressbees / DTDC"
+                        value={f.courier_name}
+                        onChange={(e) => setForms({ ...forms, [o.id]: { ...f, courier_name: e.target.value } })}
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">AWB / Tracking Number</Label>
+                      <Input
+                        placeholder="Enter AWB number"
+                        value={f.awb_code}
+                        onChange={(e) => setForms({ ...forms, [o.id]: { ...f, awb_code: e.target.value } })}
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Shipment Status</Label>
+                      <Input
+                        placeholder="shipped / in_transit / out_for_delivery"
+                        value={f.shipment_status}
+                        onChange={(e) => setForms({ ...forms, [o.id]: { ...f, shipment_status: e.target.value } })}
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Custom Tracking Link (Optional)</Label>
+                      <Input
+                        placeholder="Auto-generated if left blank"
+                        value={f.tracking_url}
+                        onChange={(e) => setForms({ ...forms, [o.id]: { ...f, tracking_url: e.target.value } })}
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-slate-500">
+                      Current Status: <strong>{sh.status || "Not assigned"}</strong>
+                      {sh.edd ? ` • Est. Delivery: ${sh.edd}` : ""}
+                    </p>
+                    <Button
+                      size="sm"
+                      disabled={busyId === o.id}
+                      onClick={() => saveTracking(o)}
+                      className="bg-brand text-xs text-white hover:bg-brand-dark"
+                    >
+                      Save Tracking Details
+                    </Button>
+                  </div>
+
+                  {Array.isArray(sh.scans) && sh.scans.length > 0 && (
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                      <p className="mb-2 text-xs font-bold text-slate-700">Recent Courier Scans:</p>
+                      <div className="max-h-40 space-y-1.5 overflow-y-auto text-xs">
+                        {sh.scans.map((sc, i) => (
+                          <div key={i} className="flex flex-wrap justify-between gap-2 rounded bg-slate-50 px-2.5 py-1.5">
+                            <span className="font-medium text-slate-800">{sc.activity || sc.status} {sc.location ? `(${sc.location})` : ""}</span>
+                            <span className="text-slate-500">{sc.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
