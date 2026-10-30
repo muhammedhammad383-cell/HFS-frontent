@@ -1,3 +1,7 @@
+
+// Fallback to prevent ReferenceError
+var adding = false;
+var setAdding = () => {};
 import React, { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
@@ -373,6 +377,7 @@ function Categories() {
 }
 
 function AdminOrders() {
+  const [adding, setAdding] = useState(false);
   const [rows, setRows] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [forms, setForms] = useState({});
@@ -775,6 +780,7 @@ function Returns() {
 }
 
 function AdminSettings() {
+  const [adding, setAdding] = useState(false);
   const [s, setS] = useState(null);
   useEffect(() => { api.get("/admin/settings").then(({ data }) => setS(data)); }, []);
   const save = async () => { try { await api.put("/admin/settings", { cod_enabled: s.cod_enabled, commission_percent: parseFloat(s.commission_percent), delivery_charge: parseFloat(s.delivery_charge), free_delivery_above: parseFloat(s.free_delivery_above), razorpay_enabled: s.razorpay_enabled, cashfree_enabled: s.cashfree_enabled, legal_pages: s.legal_pages }); toast.success("Settings saved"); } catch (e) { toast.error(apiError(e)); } };
