@@ -242,12 +242,12 @@ function Sellers() {
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
           <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
         </div>
-        <Button onClick={() => setShowAdd(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
+        <Button onClick={() => setAdding(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
           + Add New Product
         </Button>
       </div>
 
-      {showAdd && (
+      {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
@@ -279,7 +279,7 @@ function Sellers() {
                 <textarea className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" rows="2" placeholder="Product details..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setShowAdd(false)} className="text-xs">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setAdding(false)} className="text-xs">Cancel</Button>
                 <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
               </div>
             </form>
@@ -446,12 +446,12 @@ function AdminOrders() {
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
           <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
         </div>
-        <Button onClick={() => setShowAdd(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
+        <Button onClick={() => setAdding(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
           + Add New Product
         </Button>
       </div>
 
-      {showAdd && (
+      {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
@@ -483,7 +483,7 @@ function AdminOrders() {
                 <textarea className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" rows="2" placeholder="Product details..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setShowAdd(false)} className="text-xs">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setAdding(false)} className="text-xs">Cancel</Button>
                 <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
               </div>
             </form>
