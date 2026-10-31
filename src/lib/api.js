@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://hfs-project-trzv.onrender.com";
+const BACKEND_URL = "https://hfs-project-two.vercel.app";
 export const API = `${BACKEND_URL}/api`;
 
 const api = axios.create({ baseURL: API });
