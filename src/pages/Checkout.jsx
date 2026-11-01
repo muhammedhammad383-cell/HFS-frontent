@@ -25,11 +25,11 @@ export default function Checkout() {
         pincode: parsed.pincode || uAddr.pincode || "",
         state: parsed.state || uAddr.state || "",
         city: parsed.city || uAddr.city || "",
-        address_line: parsed.address_line || parsed.address || uAddr.address || "",
+        house_no: parsed.house_no || "", street_area: parsed.street_area || parsed.address_line || parsed.address || uAddr.address || "", address_line: parsed.address_line || parsed.address || uAddr.address || "",
         landmark: parsed.landmark || uAddr.landmark || ""
       };
     } catch (e) {}
-    return { full_name: user?.name || "", mobile: user?.phone || "", pincode: "", state: "", city: "", address_line: "", landmark: "" };
+    return { full_name: user?.name || "", mobile: user?.phone || "", pincode: "", state: "", city: "", house_no: "", street_area: "", address_line: "", landmark: "" };
   });
 
   // User load hone par automatic address pre-fill
@@ -43,7 +43,7 @@ export default function Checkout() {
           pincode: prev.pincode || uAddr.pincode || "",
           state: prev.state || uAddr.state || "",
           city: prev.city || uAddr.city || "",
-          address_line: prev.address_line || uAddr.address || "",
+          house_no: prev.house_no || "", street_area: prev.street_area || prev.address_line || uAddr.address || "", address_line: prev.address_line || uAddr.address || "",
           landmark: prev.landmark || uAddr.landmark || ""
         };
       });
@@ -76,14 +76,14 @@ export default function Checkout() {
     } catch (e) { toast.error(apiError(e)); setDiscount(0); setAppliedCoupon(""); }
   };
 
-  const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && (addr.address_line || "").trim().length >= 8;
+  const fullCombinedAddress = [addr.house_no, addr.street_area].filter(Boolean).join(", ").trim() || (addr.address_line || "").trim();
+  const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && (addr.house_no || "").trim().length >= 1 && (addr.street_area || "").trim().length >= 3;
 
     const placeOrder = async () => {
     try { localStorage.setItem("hfs_saved_address", JSON.stringify(addr)); } catch (e) {}
     if (!validAddr) {
-      if ((addr.address_line || "").trim().length > 0 && (addr.address_line || "").trim().length < 8) {
-        return toast.error("Please enter complete Full Address (House/Flat No, Building & Area)");
-      }
+      if (!(addr.house_no || "").trim()) return toast.error("Please enter Flat / House / Room No. & Building Name");
+      if ((addr.street_area || "").trim().length < 3) return toast.error("Please enter Road / Street / Area / Colony");
       return toast.error("Please fill all required address fields");
     }
     setPlacing(true);
@@ -93,9 +93,9 @@ export default function Checkout() {
           ...addr,
           name: addr.full_name,
           phone: addr.mobile,
-          address_line: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line,
-          address: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line,
-          street: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line
+          address_line: addr.landmark ? `${fullCombinedAddress}, Near ${addr.landmark}` : fullCombinedAddress,
+          address: addr.landmark ? `${fullCombinedAddress}, Near ${addr.landmark}` : fullCombinedAddress,
+          street: addr.landmark ? `${fullCombinedAddress}, Near ${addr.landmark}` : fullCombinedAddress
         }, payment_method: method, coupon_code: appliedCoupon
       });
 
@@ -187,9 +187,32 @@ export default function Checkout() {
               <Field label="Pincode *" v={addr.pincode} set={(v) => setAddr({ ...addr, pincode: v })} testid="addr-pincode" />
               <Field label="City *" v={addr.city} set={(v) => setAddr({ ...addr, city: v })} testid="addr-city" />
               <Field label="State *" v={addr.state} set={(v) => setAddr({ ...addr, state: v })} testid="addr-state" />
-              <Field label="Landmark" v={addr.landmark} set={(v) => setAddr({ ...addr, landmark: v })} testid="addr-landmark" />
               <div className="sm:col-span-2">
-                <Field label="Full Address *" v={addr.address_line} set={(v) => setAddr({ ...addr, address_line: v })} testid="addr-line" />
+                <Field
+                  label="Flat / House / Room No., Building Name *"
+                  placeholder="e.g. Room No. 12, Plot 4, Noor Manzil"
+                  v={addr.house_no || ""}
+                  set={(v) => setAddr({ ...addr, house_no: v, address_line: [v, addr.street_area].filter(Boolean).join(", ") })}
+                  testid="addr-house"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Field
+                  label="Road / Street / Area / Colony *"
+                  placeholder="e.g. Lotus Colony, Shivaji Nagar, Govandi"
+                  v={addr.street_area || ""}
+                  set={(v) => setAddr({ ...addr, street_area: v, address_line: [addr.house_no, v].filter(Boolean).join(", ") })}
+                  testid="addr-line"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Field
+                  label="Landmark (Near Masjid / School / Metro)"
+                  placeholder="e.g. Near Jama Masjid or Metro Station"
+                  v={addr.landmark}
+                  set={(v) => setAddr({ ...addr, landmark: v })}
+                  testid="addr-landmark"
+                />
               </div>
             </div>
           </div>
@@ -256,11 +279,11 @@ export default function Checkout() {
   );
 }
 
-function Field({ label, v, set, testid }) {
+function Field({ label, v, set, testid, placeholder }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
-      <Input value={v} onChange={(e) => set(e.target.value)} className="mt-1" data-testid={testid} />
+      <Input value={v} placeholder={placeholder || ""} onChange={(e) => set(e.target.value)} className="mt-1" data-testid={testid} />
     </div>
   );
 }
