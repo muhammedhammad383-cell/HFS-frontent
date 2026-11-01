@@ -18,6 +18,8 @@ export default function ProductDetail() {
   const [p, setP] = useState(null);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
+  const [selectedColor, setSelectedColor] = useState("Beige");
+  const [unit, setUnit] = useState("in");
   const [pincode, setPincode] = useState("");
   const [pinResult, setPinResult] = useState(null);
   const [rating, setRating] = useState(5);
@@ -25,6 +27,8 @@ export default function ProductDetail() {
 
   const load = () => api.get(`/products/${id}`).then(({ data }) => {
     setP(data); setActiveImg(0);
+    const defaultColors = Array.isArray(data.colors) && data.colors.length ? data.colors : ["Beige", "Maroon", "Pink", "Golden"];
+    setSelectedColor(defaultColors[0]);
     document.title = `${data.name} | HFS`;
   });
 
@@ -94,18 +98,154 @@ export default function ProductDetail() {
           </div>
           <p className="mt-1 text-sm font-medium text-trust">{p.stock > 0 ? `In stock (${p.stock} available)` : "Out of stock"}</p>
 
+          
+          {/* Colour Selector + Dimensions & Visual Size Guide */}
+          {(() => {
+            const colorMap = {
+              "Beige": "#D8C3A5",
+              "Maroon": "#7B1E26",
+              "Pink": "#E88D96",
+              "Golden": "#D4AF37",
+              "Coffee": "#5C4033",
+              "Navy": "#1E293B",
+              "Red": "#DC2626",
+              "Cream": "#F5F5DC",
+              "Grey": "#64748B",
+              "Transparent": "#E2E8F0"
+            };
+            const availableColors = Array.isArray(p.colors) && p.colors.length > 0
+              ? p.colors
+              : ["Beige", "Maroon", "Pink", "Golden"];
+            const rawDim = p.dimensions || "16 x 14 x 3 inches (40 x 35 x 8 cm)";
+
+            return (
+              <div className="mt-5 space-y-4 rounded-2xl border border-border bg-slate-50/70 p-4">
+                {/* Colour Buttons */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Colour: <span className="text-brand-dark">{selectedColor}</span>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">{availableColors.length} options</span>
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {availableColors.map((col, idx) => {
+                      const hex = colorMap[col] || "#CBD5E1";
+                      const isSel = selectedColor === col;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => {
+                            setSelectedColor(col);
+                            if (p.images && p.images[idx]) setActiveImg(idx);
+                          }}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                            isSel
+                              ? "border-brand bg-amber-50/80 text-slate-900 shadow-sm ring-1 ring-brand"
+                              : "border-border bg-white text-slate-600 hover:border-slate-300"
+                          }`}
+                        >
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/15 shadow-inner"
+                            style={{ backgroundColor: hex }}
+                          />
+                          {col}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Product Dimensions & Sample Size Guide */}
+                <div className="border-t border-border pt-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      📏 Product Size & Dimensions
+                    </span>
+                    <div className="inline-flex rounded-lg border border-border bg-white p-0.5 text-[11px] font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setUnit("in")}
+                        className={`rounded-md px-2 py-0.5 ${unit === "in" ? "bg-slate-900 text-white" : "text-slate-600"}`}
+                      >
+                        Inches
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUnit("cm")}
+                        className={`rounded-md px-2 py-0.5 ${unit === "cm" ? "bg-slate-900 text-white" : "text-slate-600"}`}
+                      >
+                        CM
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Visual Size Diagram Card */}
+                  <div className="mt-2.5 flex items-center gap-3.5 rounded-xl border border-amber-200/80 bg-white p-3 shadow-sm">
+                    {/* SVG Visual Cover Illustration with Dimensions */}
+                    <div className="relative flex h-20 w-24 shrink-0 items-center justify-center rounded-lg bg-amber-50/60 p-1">
+                      <svg viewBox="0 0 120 95" className="h-full w-full">
+                        {/* Cover Box */}
+                        <rect x="22" y="16" width="76" height="56" rx="5" fill="#E6D2B5" stroke="#8C6239" strokeWidth="2" />
+                        {/* Clear Window */}
+                        <rect x="30" y="34" width="60" height="30" rx="3" fill="#FFFDF9" fillOpacity="0.75" stroke="#B08968" strokeWidth="1.2" strokeDasharray="2 2" />
+                        {/* Width Arrow (Top) */}
+                        <line x1="22" y1="9" x2="98" y2="9" stroke="#0F172A" strokeWidth="1.5" />
+                        <text x="60" y="7" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A">
+                          {unit === "in" ? '16" (Length)' : '40 cm'}
+                        </text>
+                        {/* Height Arrow (Left) */}
+                        <line x1="14" y1="16" x2="14" y2="72" stroke="#0F172A" strokeWidth="1.5" />
+                        <text x="11" y="46" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A" transform="rotate(-90 11 46)">
+                          {unit === "in" ? '14" (Width)' : '35 cm'}
+                        </text>
+                        {/* Bottom Depth Label */}
+                        <text x="60" y="85" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#B45309">
+                          {unit === "in" ? '↕ Gusset / Depth: 3" - 8"' : '↕ Depth: 8 - 20 cm'}
+                        </text>
+                      </svg>
+                    </div>
+
+                    {/* Dimension Details Table */}
+                    <div className="flex-1 space-y-1 text-xs">
+                      <p className="font-semibold text-slate-900">{rawDim}</p>
+                      <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
+                        <div className="rounded-lg bg-slate-100 px-1.5 py-1">
+                          <span className="block text-[10px] text-slate-500">Length</span>
+                          <span className="font-bold text-slate-800">{unit === "in" ? "16 in" : "40 cm"}</span>
+                        </div>
+                        <div className="rounded-lg bg-slate-100 px-1.5 py-1">
+                          <span className="block text-[10px] text-slate-500">Width</span>
+                          <span className="font-bold text-slate-800">{unit === "in" ? "14 in" : "35 cm"}</span>
+                        </div>
+                        <div className="rounded-lg bg-slate-100 px-1.5 py-1">
+                          <span className="block text-[10px] text-slate-500">Material</span>
+                          <span className="font-bold text-emerald-700">120 GSM</span>
+                        </div>
+                      </div>
+                      <p className="pt-0.5 text-[11px] text-slate-600">
+                        ✅ <b>Sample Fit:</b> Standard Double-Fold Saree, Suit ya Lehenga aaram se aata hai.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* qty + actions */}
           <div className="mt-5 flex items-center gap-4">
             <div className="flex items-center rounded-xl border border-border">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5" data-testid="qty-minus"><Minus className="h-4 w-4" /></button>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5" aria-label="Decrease quantity" data-testid="qty-minus"><Minus className="h-4 w-4" /></button>
               <span className="w-10 text-center font-semibold" data-testid="qty-value">{qty}</span>
-              <button onClick={() => setQty((q) => Math.min(p.stock, q + 1))} className="p-2.5" data-testid="qty-plus"><Plus className="h-4 w-4" /></button>
+              <button onClick={() => setQty((q) => Math.min(p.stock, q + 1))} className="p-2.5" aria-label="Increase quantity" data-testid="qty-plus"><Plus className="h-4 w-4" /></button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={() => addToCart(p.id, qty)} disabled={p.stock <= 0} data-testid="pdp-add-to-cart" className="flex-1 rounded-xl bg-slate-900 font-semibold text-white hover:bg-slate-800 sm:flex-none sm:px-8">Add to Cart</Button>
             <Button onClick={buyNow} disabled={p.stock <= 0} data-testid="pdp-buy-now" className="flex-1 rounded-xl bg-brand font-semibold text-white hover:bg-brand-dark sm:flex-none sm:px-8">Buy Now</Button>
-            <Button onClick={() => toggleWishlist(p.id)} variant="outline" size="icon" data-testid="pdp-wishlist" className="rounded-xl">
+            <Button onClick={() => toggleWishlist(p.id)} variant="outline" size="icon" aria-label="Add to wishlist" data-testid="pdp-wishlist" className="rounded-xl">
               <Heart className={`h-5 w-5 ${wished ? "fill-rose-brand text-rose-brand" : ""}`} />
             </Button>
           </div>

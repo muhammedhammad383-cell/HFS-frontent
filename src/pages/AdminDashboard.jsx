@@ -323,6 +323,16 @@ function Sellers() {
                 {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Colours (comma separated)</label>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Beige, Maroon, Pink, Golden" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="16 x 14 x 3 inches (40 x 35 cm)" value={form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"} onChange={e => setForm({...form, dimensions: e.target.value})} />
+                  </div>
+                </div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
                 <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
               </div>
@@ -592,6 +602,16 @@ function AdminOrders() {
                 {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Colours (comma separated)</label>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Beige, Maroon, Pink, Golden" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="16 x 14 x 3 inches (40 x 35 cm)" value={form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"} onChange={e => setForm({...form, dimensions: e.target.value})} />
+                  </div>
+                </div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
                 <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
               </div>
