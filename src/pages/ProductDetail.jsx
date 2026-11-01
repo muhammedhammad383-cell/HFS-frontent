@@ -27,8 +27,17 @@ export default function ProductDetail() {
 
   const load = () => api.get(`/products/${id}`).then(({ data }) => {
     setP(data); setActiveImg(0);
-    const defaultColors = Array.isArray(data.colors) && data.colors.length ? data.colors : ["Beige", "Maroon", "Pink", "Golden"];
-    setSelectedColor(defaultColors[0]);
+    const specColor = (data.specifications || []).find(s => /^(color|colour)$/i.test((s.key || "").trim()))?.value;
+    let initCol = "Beige";
+    if (Array.isArray(data.colors) && data.colors.length) {
+      initCol = data.colors[0];
+    } else if (specColor) {
+      initCol = specColor.trim();
+    } else {
+      const m = (data.name || "").match(/\b(Beige|Maroon|Pink|Golden|Gold|Slate Blue|Steel Grey|Grey|Blue|Coffee|Brown|Red|Navy|Cream|Black|White|Purple|Green)\b/i);
+      if (m) initCol = m[1];
+    }
+    setSelectedColor(initCol);
     document.title = `${data.name} | HFS`;
   });
 
@@ -106,27 +115,70 @@ export default function ProductDetail() {
               "Maroon": "#7B1E26",
               "Pink": "#E88D96",
               "Golden": "#D4AF37",
+              "Gold": "#D4AF37",
+              "Slate Blue": "#5B7C99",
+              "Steel Grey": "#71797E",
+              "Slate Blue / Steel Grey": "#64748B",
+              "Grey": "#64748B",
+              "Blue": "#3B82F6",
               "Coffee": "#5C4033",
+              "Brown": "#6F4E37",
               "Navy": "#1E293B",
               "Red": "#DC2626",
               "Cream": "#F5F5DC",
-              "Grey": "#64748B"
+              "Black": "#1E293B",
+              "White": "#F8FAFC",
+              "Green": "#15803D",
+              "Purple": "#7E22CE"
             };
-            const allCatalogColors = ["Beige", "Maroon", "Pink", "Golden"];
 
-            // Detect which colours are actually available for this product
+            const specs = Array.isArray(p.specifications) ? p.specifications : [];
+            const getSpec = (regex) => specs.find(s => regex.test((s.key || "").trim()))?.value;
+
+            const specColor = getSpec(/^(color|colour|colors|colours)$/i);
+            const specDim = getSpec(/^(dimension|dimensions|size)$/i);
+            const specMat = getSpec(/^(material|fabric|gsm)$/i);
+
+            // 1. Determine In-Stock Colours for this specific product
             let inStockColors = [];
             if (Array.isArray(p.colors) && p.colors.length > 0) {
-              inStockColors = p.colors.map(c => c.trim());
+              inStockColors = p.colors.map(c => c.trim()).filter(Boolean);
+            } else if (specColor) {
+              inStockColors = [specColor.trim()];
             } else {
               const titleLower = (p.name || "").toLowerCase();
-              const matchedInTitle = Object.keys(colorMap).filter(c => titleLower.includes(c.toLowerCase()));
-              inStockColors = matchedInTitle.length > 0 ? matchedInTitle : ["Beige"];
+              const matched = Object.keys(colorMap).filter(c => titleLower.includes(c.toLowerCase()));
+              inStockColors = matched.length > 0 ? [matched[0]] : ["Beige"];
             }
 
-            // Combine in-stock colours with standard catalog colours so unavailable ones show as "Not Available"
-            const displayColors = Array.from(new Set([...inStockColors, ...allCatalogColors]));
-            const rawDim = p.dimensions || "16 x 14 x 3 inches (40 x 35 x 8 cm)";
+            const standardCatalogColors = ["Beige", "Golden", "Maroon", "Pink"];
+            const displayColors = Array.from(new Set([...inStockColors, ...standardCatalogColors]));
+            const activeColor = inStockColors.includes(selectedColor) ? selectedColor : inStockColors[0];
+
+            // 2. Determine Exact Dimensions from Specifications, Product field, or Product Title
+            const titleDimMatch = (p.name || "").match(/(\d+\s*[xX*]\s*\d+(?:\s*[xX*]\s*\d+)?\s*(?:Inch|Inches|in|cm)?)/i);
+            const rawDim = specDim || p.dimensions || (titleDimMatch ? titleDimMatch[1] : "16 x 14 x 3 Inches");
+
+            const nums = (rawDim.match(/\d+(?:\.\d+)?/g) || ["16", "14", "3"]).map(Number);
+            const lenIn = nums[0] || 16;
+            const widIn = nums[1] || 14;
+            const depIn = nums[2] || 3;
+
+            const isCm = unit === "cm";
+            const fmtVal = (v) => isCm ? `${Math.round(v * 2.54)} cm` : `${v} in`;
+            const fmtShort = (v) => isCm ? `${Math.round(v * 2.54)}cm` : `${v}"`;
+
+            const displayHeadline = isCm
+              ? `${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm (${lenIn} x ${widIn} x ${depIn} Inches)`
+              : `${lenIn} x ${widIn} x ${depIn} Inches (${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm)`;
+
+            const materialLabel = specMat || ((p.name || "").includes("120 GSM") ? "120 GSM" : "Premium");
+
+            const getColorHex = (colName) => {
+              if (colorMap[colName]) return colorMap[colName];
+              const foundKey = Object.keys(colorMap).find(k => colName.toLowerCase().includes(k.toLowerCase()));
+              return foundKey ? colorMap[foundKey] : "#64748B";
+            };
 
             return (
               <div className="mt-5 space-y-4 rounded-2xl border border-border bg-slate-50/70 p-4">
@@ -134,7 +186,7 @@ export default function ProductDetail() {
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Colour: <span className="text-brand-dark">{selectedColor}</span>
+                      Colour: <span className="text-brand-dark">{activeColor}</span>
                     </span>
                     <span className="text-[11px] font-medium text-emerald-700">
                       {inStockColors.length} Available
@@ -142,9 +194,9 @@ export default function ProductDetail() {
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {displayColors.map((col, idx) => {
-                      const hex = colorMap[col] || "#CBD5E1";
+                      const hex = getColorHex(col);
                       const isAvailable = p.stock > 0 && inStockColors.some(c => c.toLowerCase() === col.toLowerCase());
-                      const isSel = selectedColor.toLowerCase() === col.toLowerCase();
+                      const isSel = activeColor.toLowerCase() === col.toLowerCase();
                       return (
                         <button
                           key={col}
@@ -213,44 +265,44 @@ export default function ProductDetail() {
                     </div>
                   </div>
 
-                  {/* Visual Size Diagram Card */}
+                  {/* Dynamic Visual Size Diagram Card */}
                   <div className="mt-2.5 flex items-center gap-3.5 rounded-xl border border-amber-200/80 bg-white p-3 shadow-sm">
                     <div className="relative flex h-20 w-24 shrink-0 items-center justify-center rounded-lg bg-amber-50/60 p-1">
                       <svg viewBox="0 0 120 95" className="h-full w-full">
-                        <rect x="22" y="16" width="76" height="56" rx="5" fill="#E6D2B5" stroke="#8C6239" strokeWidth="2" />
-                        <rect x="30" y="34" width="60" height="30" rx="3" fill="#FFFDF9" fillOpacity="0.75" stroke="#B08968" strokeWidth="1.2" strokeDasharray="2 2" />
+                        <rect x="22" y="16" width="76" height="56" rx="5" fill={getColorHex(activeColor)} fillOpacity="0.35" stroke="#475569" strokeWidth="2" />
+                        <rect x="30" y="34" width="60" height="30" rx="3" fill="#FFFDF9" fillOpacity="0.8" stroke="#64748B" strokeWidth="1.2" strokeDasharray="2 2" />
                         <line x1="22" y1="9" x2="98" y2="9" stroke="#0F172A" strokeWidth="1.5" />
                         <text x="60" y="7" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A">
-                          {unit === "in" ? '16" (Length)' : '40 cm'}
+                          {fmtShort(lenIn)} (Length)
                         </text>
                         <line x1="14" y1="16" x2="14" y2="72" stroke="#0F172A" strokeWidth="1.5" />
                         <text x="11" y="46" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A" transform="rotate(-90 11 46)">
-                          {unit === "in" ? '14" (Width)' : '35 cm'}
+                          {fmtShort(widIn)} (Width)
                         </text>
                         <text x="60" y="85" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#B45309">
-                          {unit === "in" ? '↕ Gusset / Depth: 3" - 8"' : '↕ Depth: 8 - 20 cm'}
+                          ↕ Height / Depth: {fmtShort(depIn)}
                         </text>
                       </svg>
                     </div>
 
                     <div className="flex-1 space-y-1 text-xs">
-                      <p className="font-semibold text-slate-900">{rawDim}</p>
+                      <p className="font-semibold text-slate-900">{displayHeadline}</p>
                       <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
                         <div className="rounded-lg bg-slate-100 px-1.5 py-1">
                           <span className="block text-[10px] text-slate-500">Length</span>
-                          <span className="font-bold text-slate-800">{unit === "in" ? "16 in" : "40 cm"}</span>
+                          <span className="font-bold text-slate-800">{fmtVal(lenIn)}</span>
                         </div>
                         <div className="rounded-lg bg-slate-100 px-1.5 py-1">
                           <span className="block text-[10px] text-slate-500">Width</span>
-                          <span className="font-bold text-slate-800">{unit === "in" ? "14 in" : "35 cm"}</span>
+                          <span className="font-bold text-slate-800">{fmtVal(widIn)}</span>
                         </div>
                         <div className="rounded-lg bg-slate-100 px-1.5 py-1">
-                          <span className="block text-[10px] text-slate-500">Material</span>
-                          <span className="font-bold text-emerald-700">120 GSM</span>
+                          <span className="block text-[10px] text-slate-500">Height</span>
+                          <span className="font-bold text-emerald-700">{fmtVal(depIn)}</span>
                         </div>
                       </div>
                       <p className="pt-0.5 text-[11px] text-slate-600">
-                        ✅ <b>Sample Fit:</b> Standard Double-Fold Saree, Suit ya Lehenga aaram se aata hai.
+                        ✅ <b>Material:</b> {materialLabel} · <b>Fit:</b> Standard Sarees, Suits & Lehengas.
                       </p>
                     </div>
                   </div>
