@@ -126,7 +126,7 @@ export default function Home() {
       <Section title="Shop by Category" subtitle="Find the perfect protection for everything you own" to="/products">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-5">
           {cats.slice(0, 10).map((c) => (
-            <Link key={c.id} onClick={() => setOpen(false)} to={`/category/${c.slug}`} data-testid={`category-${c.slug}`} className="group flex flex-col items-center gap-2 text-center">
+            <Link key={c.id}  to={`/category/${c.slug}`} data-testid={`category-${c.slug}`} className="group flex flex-col items-center gap-2 text-center">
               <div className="aspect-square w-full overflow-hidden rounded-2xl border border-border bg-secondary">
                 <img src={c.image} alt={c.name} loading="lazy" className="zoom-img h-full w-full object-cover" />
               </div>
