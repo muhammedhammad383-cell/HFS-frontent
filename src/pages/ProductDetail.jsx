@@ -110,12 +110,22 @@ export default function ProductDetail() {
               "Navy": "#1E293B",
               "Red": "#DC2626",
               "Cream": "#F5F5DC",
-              "Grey": "#64748B",
-              "Transparent": "#E2E8F0"
+              "Grey": "#64748B"
             };
-            const availableColors = Array.isArray(p.colors) && p.colors.length > 0
-              ? p.colors
-              : ["Beige", "Maroon", "Pink", "Golden"];
+            const allCatalogColors = ["Beige", "Maroon", "Pink", "Golden"];
+
+            // Detect which colours are actually available for this product
+            let inStockColors = [];
+            if (Array.isArray(p.colors) && p.colors.length > 0) {
+              inStockColors = p.colors.map(c => c.trim());
+            } else {
+              const titleLower = (p.name || "").toLowerCase();
+              const matchedInTitle = Object.keys(colorMap).filter(c => titleLower.includes(c.toLowerCase()));
+              inStockColors = matchedInTitle.length > 0 ? matchedInTitle : ["Beige"];
+            }
+
+            // Combine in-stock colours with standard catalog colours so unavailable ones show as "Not Available"
+            const displayColors = Array.from(new Set([...inStockColors, ...allCatalogColors]));
             const rawDim = p.dimensions || "16 x 14 x 3 inches (40 x 35 x 8 cm)";
 
             return (
@@ -126,31 +136,53 @@ export default function ProductDetail() {
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                       Colour: <span className="text-brand-dark">{selectedColor}</span>
                     </span>
-                    <span className="text-[11px] text-muted-foreground">{availableColors.length} options</span>
+                    <span className="text-[11px] font-medium text-emerald-700">
+                      {inStockColors.length} Available
+                    </span>
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-2">
-                    {availableColors.map((col, idx) => {
+                    {displayColors.map((col, idx) => {
                       const hex = colorMap[col] || "#CBD5E1";
-                      const isSel = selectedColor === col;
+                      const isAvailable = p.stock > 0 && inStockColors.some(c => c.toLowerCase() === col.toLowerCase());
+                      const isSel = selectedColor.toLowerCase() === col.toLowerCase();
                       return (
                         <button
                           key={col}
                           type="button"
                           onClick={() => {
+                            if (!isAvailable) {
+                              toast.error(`${col} colour is currently Not Available`);
+                              return;
+                            }
                             setSelectedColor(col);
                             if (p.images && p.images[idx]) setActiveImg(idx);
                           }}
-                          className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                            isSel
-                              ? "border-brand bg-amber-50/80 text-slate-900 shadow-sm ring-1 ring-brand"
-                              : "border-border bg-white text-slate-600 hover:border-slate-300"
+                          className={`relative flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all ${
+                            !isAvailable
+                              ? "cursor-not-allowed border-slate-200 bg-slate-100/70 opacity-60"
+                              : isSel
+                              ? "border-brand bg-amber-50/90 text-slate-900 shadow-sm ring-1 ring-brand"
+                              : "border-border bg-white text-slate-700 hover:border-slate-300"
                           }`}
                         >
                           <span
-                            className="h-4 w-4 rounded-full border border-black/15 shadow-inner"
+                            className="relative h-4 w-4 shrink-0 rounded-full border border-black/15 shadow-inner"
                             style={{ backgroundColor: hex }}
-                          />
-                          {col}
+                          >
+                            {!isAvailable && (
+                              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow">
+                                ✕
+                              </span>
+                            )}
+                          </span>
+                          <div className="flex flex-col leading-tight">
+                            <span className={`text-xs font-semibold ${!isAvailable ? "line-through text-slate-400" : ""}`}>
+                              {col}
+                            </span>
+                            <span className={`text-[9px] font-medium ${isAvailable ? "text-emerald-600" : "text-rose-500"}`}>
+                              {isAvailable ? "In Stock" : "Not Available"}
+                            </span>
+                          </div>
                         </button>
                       );
                     })}
@@ -183,31 +215,24 @@ export default function ProductDetail() {
 
                   {/* Visual Size Diagram Card */}
                   <div className="mt-2.5 flex items-center gap-3.5 rounded-xl border border-amber-200/80 bg-white p-3 shadow-sm">
-                    {/* SVG Visual Cover Illustration with Dimensions */}
                     <div className="relative flex h-20 w-24 shrink-0 items-center justify-center rounded-lg bg-amber-50/60 p-1">
                       <svg viewBox="0 0 120 95" className="h-full w-full">
-                        {/* Cover Box */}
                         <rect x="22" y="16" width="76" height="56" rx="5" fill="#E6D2B5" stroke="#8C6239" strokeWidth="2" />
-                        {/* Clear Window */}
                         <rect x="30" y="34" width="60" height="30" rx="3" fill="#FFFDF9" fillOpacity="0.75" stroke="#B08968" strokeWidth="1.2" strokeDasharray="2 2" />
-                        {/* Width Arrow (Top) */}
                         <line x1="22" y1="9" x2="98" y2="9" stroke="#0F172A" strokeWidth="1.5" />
                         <text x="60" y="7" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A">
                           {unit === "in" ? '16" (Length)' : '40 cm'}
                         </text>
-                        {/* Height Arrow (Left) */}
                         <line x1="14" y1="16" x2="14" y2="72" stroke="#0F172A" strokeWidth="1.5" />
                         <text x="11" y="46" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A" transform="rotate(-90 11 46)">
                           {unit === "in" ? '14" (Width)' : '35 cm'}
                         </text>
-                        {/* Bottom Depth Label */}
                         <text x="60" y="85" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#B45309">
                           {unit === "in" ? '↕ Gusset / Depth: 3" - 8"' : '↕ Depth: 8 - 20 cm'}
                         </text>
                       </svg>
                     </div>
 
-                    {/* Dimension Details Table */}
                     <div className="flex-1 space-y-1 text-xs">
                       <p className="font-semibold text-slate-900">{rawDim}</p>
                       <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
@@ -233,7 +258,6 @@ export default function ProductDetail() {
               </div>
             );
           })()}
-
           {/* qty + actions */}
           <div className="mt-5 flex items-center gap-4">
             <div className="flex items-center rounded-xl border border-border">
