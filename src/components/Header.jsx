@@ -89,7 +89,7 @@ export function Header() {
             )}
 
             {(!user || user.role === "customer") && (
-              <Link to="/cart" data-testid="cart-link" className="relative p-2">
+              <Link to="/cart" data-testid="cart-link" aria-label="Shopping Cart" className="relative p-2">
                 <ShoppingCart className="h-5.5 w-5.5 text-slate-700" size={22} />
                 {cartCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-white">
