@@ -76,15 +76,27 @@ export default function Checkout() {
     } catch (e) { toast.error(apiError(e)); setDiscount(0); setAppliedCoupon(""); }
   };
 
-  const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && addr.address_line;
+  const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && (addr.address_line || "").trim().length >= 8;
 
     const placeOrder = async () => {
     try { localStorage.setItem("hfs_saved_address", JSON.stringify(addr)); } catch (e) {}
-    if (!validAddr) return toast.error("Please fill all required address fields");
+    if (!validAddr) {
+      if ((addr.address_line || "").trim().length > 0 && (addr.address_line || "").trim().length < 8) {
+        return toast.error("Please enter complete Full Address (House/Flat No, Building & Area)");
+      }
+      return toast.error("Please fill all required address fields");
+    }
     setPlacing(true);
     try {
       const { data } = await api.post("/orders/checkout", {
-        address: addr, payment_method: method, coupon_code: appliedCoupon
+        address: {
+          ...addr,
+          name: addr.full_name,
+          phone: addr.mobile,
+          address_line: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line,
+          address: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line,
+          street: addr.landmark ? `${addr.address_line}, Near ${addr.landmark}` : addr.address_line
+        }, payment_method: method, coupon_code: appliedCoupon
       });
 
       if (method === "cod") {
