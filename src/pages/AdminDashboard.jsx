@@ -322,9 +322,9 @@ function Sellers() {
           <div className="grid h-11 w-11 place-items-center rounded-full bg-slate-900 font-bold text-brand-light">{s.name?.[0]}</div>
           <div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{s.store?.name || s.name}</p><p className="text-xs text-muted-foreground">{s.email} · {s.product_count} products</p></div>
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${s.seller_status === "approved" ? "bg-green-100 text-green-700" : s.seller_status === "pending" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>{s.seller_status}</span>
-          {s.seller_status !== "approved" && <Button size="sm" onClick={() => decide(s.id, "approved")} className="bg-trust text-white hover:bg-green-700" data-testid={`admin-seller-approve-button-${s.id}`}><Check className="h-4 w-4" /></Button>}
-          {s.seller_status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "rejected")} data-testid={`admin-seller-reject-${s.id}`}><X className="h-4 w-4" /></Button>}
-          <Button size="sm" variant="outline" onClick={() => block(s.id)} className={s.status === "blocked" ? "border-rose-brand text-rose-brand" : ""}><Ban className="h-4 w-4" /></Button>
+          {s.seller_status !== "approved" && <Button size="sm" onClick={() => decide(s.id, "approved")} className="bg-trust text-white hover:bg-green-700" data-testid={`admin-seller-approve-button-${s.id}`} aria-label="Admin action"><Check className="h-4 w-4" /></Button>}
+          {s.seller_status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "rejected")} data-testid={`admin-seller-reject-${s.id}`} aria-label="Admin action"><X className="h-4 w-4" /></Button>}
+          <Button size="sm" variant="outline" onClick={() => block(s.id)} className={s.status === "blocked" ? "border-rose-brand text-rose-brand" : ""} aria-label="Admin action"><Ban className="h-4 w-4" /></Button>
         </div>
       ))}
     </div>
@@ -376,9 +376,9 @@ function ProductApprovals() {
             <div className="min-w-0 flex-1"><p className="line-clamp-1 font-medium text-slate-900">{p.name}</p><p className="text-xs text-muted-foreground">{p.store_name} · {inr(p.sale_price || p.price)}</p></div>
             <span className={`text-xs font-semibold capitalize ${p.status === "approved" ? "text-green-600" : p.status === "pending" ? "text-amber-600" : "text-rose-600"}`}>{p.status}</span>
             <label className="flex items-center gap-1 text-xs"><Switch checked={!!p.featured} onCheckedChange={(v) => flag(p.id, "featured", v)} /> Featured</label>
-            {p.status !== "approved" && <Button size="sm" onClick={() => decide(p.id, "approved")} className="bg-trust text-white" data-testid={`admin-product-approve-${p.id}`}><Check className="h-4 w-4" /></Button>}
-            {p.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(p.id, "rejected")}><X className="h-4 w-4" /></Button>}
-            <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-rose-brand"><Trash2 className="h-4 w-4" /></Button>
+            {p.status !== "approved" && <Button size="sm" onClick={() => decide(p.id, "approved")} className="bg-trust text-white" data-testid={`admin-product-approve-${p.id}`} aria-label="Admin action"><Check className="h-4 w-4" /></Button>}
+            {p.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(p.id, "rejected")} aria-label="Admin action"><X className="h-4 w-4" /></Button>}
+            <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-rose-brand" aria-label="Admin action"><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
       </div>
@@ -417,7 +417,7 @@ function Categories() {
           <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3" data-testid={`admin-cat-${c.id}`}>
             <img src={c.image} alt="" className="h-12 w-12 rounded-lg object-cover" />
             <div className="flex-1"><p className="font-medium text-slate-900">{c.name}</p><p className="text-xs text-muted-foreground">{c.product_count} products</p></div>
-            <button onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-brand"><Trash2 className="h-4 w-4" /></button>
+            <button aria-label="Delete category" onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-brand"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>
@@ -766,7 +766,7 @@ function Coupons() {
         {rows.map((c) => (
           <div key={c.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
             <div><p className="font-heading font-bold text-slate-900">{c.code}</p><p className="text-xs text-muted-foreground">{c.type === "percent" ? `${c.value}% off` : `${inr(c.value)} off`} · Min {inr(c.min_order)}</p></div>
-            <button onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-brand"><Trash2 className="h-4 w-4" /></button>
+            <button aria-label="Delete category" onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-brand"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>
@@ -839,9 +839,9 @@ function Returns() {
         <div key={r.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
           <div><p className="font-medium text-slate-900">{r.order_number}</p><p className="text-sm text-muted-foreground">{r.reason} · <span className="capitalize">{r.status}</span></p></div>
           <div className="flex gap-2">
-            <Button size="sm" onClick={() => decide(r.id, "approved")} className="bg-trust text-white">Approve</Button>
-            <Button size="sm" variant="outline" onClick={() => decide(r.id, "refunded")}>Refund</Button>
-            <Button size="sm" variant="outline" onClick={() => decide(r.id, "rejected")}>Reject</Button>
+            <Button size="sm" onClick={() => decide(r.id, "approved")} className="bg-trust text-white" aria-label="Admin action">Approve</Button>
+            <Button size="sm" variant="outline" onClick={() => decide(r.id, "refunded")} aria-label="Admin action">Refund</Button>
+            <Button size="sm" variant="outline" onClick={() => decide(r.id, "rejected")} aria-label="Admin action">Reject</Button>
           </div>
         </div>
       ))}
