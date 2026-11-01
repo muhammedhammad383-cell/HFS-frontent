@@ -334,7 +334,82 @@ function Sellers() {
                   </div>
                 </div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
-                <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
+                <select
+                required
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs"
+                value={form.category || "Saree Covers"}
+                onChange={e => setForm({...form, category: e.target.value})}
+              >
+                {[
+                  "Saree Covers",
+                  "Hanging Saree Covers",
+                  "Shoes Covers",
+                  "Clothes Covers",
+                  "Garment Bags",
+                  "Storage Bags",
+                  "Travel Bags",
+                  "Pouches",
+                  "Vehicle Covers",
+                  "Other Products"
+                ].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="rounded-xl border border-border bg-slate-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700">Specifications (Key / Value)</label>
+                <button
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    specs_list: [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]), { key: "", value: "" }]
+                  })}
+                  className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900 hover:bg-amber-200"
+                >
+                  + Add Key/Value
+                </button>
+              </div>
+              {(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]).map((sp, idx) => (
+                <div key={idx} className="grid grid-cols-5 gap-2 items-center">
+                  <input
+                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
+                    placeholder="Key (e.g. Material)"
+                    value={sp.key}
+                    onChange={e => {
+                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
+                      list[idx] = { ...list[idx], key: e.target.value };
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                  />
+                  <input
+                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
+                    placeholder="Value (e.g. Satin)"
+                    value={sp.value}
+                    onChange={e => {
+                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
+                      list[idx] = { ...list[idx], value: e.target.value };
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const list = (form.specs_list || []).filter((_, i) => i !== idx);
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-bold text-rose-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-700">Description</label>
@@ -613,7 +688,82 @@ function AdminOrders() {
                   </div>
                 </div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
-                <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Saree Covers" value={form.category} onChange={e => setForm({...form, category: e.target.value})} />
+                <select
+                required
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs"
+                value={form.category || "Saree Covers"}
+                onChange={e => setForm({...form, category: e.target.value})}
+              >
+                {[
+                  "Saree Covers",
+                  "Hanging Saree Covers",
+                  "Shoes Covers",
+                  "Clothes Covers",
+                  "Garment Bags",
+                  "Storage Bags",
+                  "Travel Bags",
+                  "Pouches",
+                  "Vehicle Covers",
+                  "Other Products"
+                ].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="rounded-xl border border-border bg-slate-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700">Specifications (Key / Value)</label>
+                <button
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    specs_list: [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]), { key: "", value: "" }]
+                  })}
+                  className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900 hover:bg-amber-200"
+                >
+                  + Add Key/Value
+                </button>
+              </div>
+              {(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]).map((sp, idx) => (
+                <div key={idx} className="grid grid-cols-5 gap-2 items-center">
+                  <input
+                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
+                    placeholder="Key (e.g. Material)"
+                    value={sp.key}
+                    onChange={e => {
+                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
+                      list[idx] = { ...list[idx], key: e.target.value };
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                  />
+                  <input
+                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
+                    placeholder="Value (e.g. Satin)"
+                    value={sp.value}
+                    onChange={e => {
+                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
+                      list[idx] = { ...list[idx], value: e.target.value };
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const list = (form.specs_list || []).filter((_, i) => i !== idx);
+                      const specsObj = {};
+                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
+                      setForm({ ...form, specs_list: list, specifications: specsObj });
+                    }}
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-bold text-rose-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-700">Description</label>
