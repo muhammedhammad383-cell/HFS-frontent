@@ -297,9 +297,30 @@ function Sellers() {
                   <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="599" value={form.sale_price} onChange={e => setForm({...form, sale_price: e.target.value})} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Stock</label>
+                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="50" value={form.stock ?? 50} onChange={e => setForm({...form, stock: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">SKU</label>
+                  <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="HFS-001" value={form.sku || ""} onChange={e => setForm({...form, sku: e.target.value})} />
+                </div>
+              </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">Image URL</label>
-                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://..." value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+                <label className="text-xs font-semibold text-slate-700">Product Photos</label>
+                <label className="mt-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-amber-400 bg-amber-50/40 px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-amber-50">
+                  <span>📁 Choose Photo from Gallery</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result }));
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
+                <input required className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+                {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
@@ -545,9 +566,30 @@ function AdminOrders() {
                   <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="599" value={form.sale_price} onChange={e => setForm({...form, sale_price: e.target.value})} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Stock</label>
+                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="50" value={form.stock ?? 50} onChange={e => setForm({...form, stock: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">SKU</label>
+                  <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="HFS-001" value={form.sku || ""} onChange={e => setForm({...form, sku: e.target.value})} />
+                </div>
+              </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">Image URL</label>
-                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://..." value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+                <label className="text-xs font-semibold text-slate-700">Product Photos</label>
+                <label className="mt-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-amber-400 bg-amber-50/40 px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-amber-50">
+                  <span>📁 Choose Photo from Gallery</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result }));
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
+                <input required className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+                {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-700">Category</label>
