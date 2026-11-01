@@ -239,6 +239,28 @@ function CustomerManager() {
 
 function Sellers() {
   const [rows, setRows] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+  const createProduct = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post("/admin/products", {
+        ...form,
+        price: Number(form.price),
+        sale_price: Number(form.sale_price || form.price),
+      });
+      toast.success("Product added successfully!");
+      setAdding(false);
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      if (typeof load === "function") load();
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
   const load = () => api.get("/admin/sellers").then(({ data }) => setRows(data));
   useEffect(() => { load(); }, []);
   const decide = async (id, decision) => { await api.put(`/admin/sellers/${id}/decision`, { decision }); toast.success(`Seller ${decision}`); load(); };
@@ -311,6 +333,28 @@ function Sellers() {
 
 function ProductApprovals() {
   const [rows, setRows] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+  const createProduct = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post("/admin/products", {
+        ...form,
+        price: Number(form.price),
+        sale_price: Number(form.sale_price || form.price),
+      });
+      toast.success("Product added successfully!");
+      setAdding(false);
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      if (typeof load === "function") load();
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
   const [filter, setFilter] = useState("all");
   const load = () => api.get(`/admin/products${filter !== "all" ? `?status=${filter}` : ""}`).then(({ data }) => setRows(data));
   useEffect(() => { load(); }, [filter]);
@@ -383,6 +427,27 @@ function Categories() {
 
 function AdminOrders() {
   const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+  const createProduct = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post("/admin/products", {
+        ...form,
+        price: Number(form.price),
+        sale_price: Number(form.sale_price || form.price),
+      });
+      toast.success("Product added successfully!");
+      setAdding(false);
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      if (typeof load === "function") load();
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
   const [rows, setRows] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [forms, setForms] = useState({});
