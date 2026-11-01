@@ -14,6 +14,7 @@ export function Header() {
   const { user, logout } = useAuth();
   const { cartCount, wishlist } = useCart();
   const [q, setQ] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [cats, setCats] = useState([]);
   const navigate = useNavigate();
 
@@ -36,7 +37,7 @@ export function Header() {
       <div className="border-b border-border bg-card/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           {/* Mobile menu */}
-          <Sheet>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <button data-testid="mobile-menu-btn" className="md:hidden">
                 <Menu className="h-6 w-6 text-slate-700" />
@@ -49,9 +50,9 @@ export function Header() {
                 </SheetTitle>
               </SheetHeader>
               <nav className="mt-4 flex flex-col gap-1">
-                <Link to="/products" className="rounded-lg px-3 py-2 font-medium hover:bg-secondary">All Products</Link>
+                <Link to="/products" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2 font-medium hover:bg-secondary">All Products</Link>
                 {cats.map((c) => (
-                  <Link key={c.id} onClick={() => {}} to={`/category/${c.slug}`} className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-secondary">
+                  <Link key={c.id} onClick={() => setMenuOpen(false)} to={`/category/${c.slug}`} className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-secondary">
                     {c.name}
                   </Link>
                 ))}
@@ -156,7 +157,7 @@ export function Header() {
           <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-6 py-2.5 text-sm no-scrollbar lg:px-8">
             <Link to="/products" className="whitespace-nowrap font-semibold text-slate-900 hover:text-brand">All</Link>
             {cats.map((c) => (
-              <Link key={c.id} onClick={() => {}} to={`/category/${c.slug}`} className="whitespace-nowrap text-slate-600 transition-colors hover:text-brand">
+              <Link key={c.id} onClick={() => setMenuOpen(false)} to={`/category/${c.slug}`} className="whitespace-nowrap text-slate-600 transition-colors hover:text-brand">
                 {c.name}
               </Link>
             ))}

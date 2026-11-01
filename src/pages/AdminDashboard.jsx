@@ -280,7 +280,7 @@ function Sellers() {
 
       {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
             <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
               <div>
@@ -559,7 +559,7 @@ function AdminOrders() {
 
       {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
             <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
               <div>
