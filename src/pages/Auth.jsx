@@ -159,6 +159,7 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
+      <GoogleAuthButton onSuccess={(u) => navigate(location.state?.from || (u.role === "admin" ? "/admin" : "/"))} />
       <p className="mt-4 text-center text-sm text-muted-foreground">
         New to HFS BAZAAR? <Link to="/register" className="font-semibold text-brand-dark hover:underline">Create account</Link>
       </p>
@@ -195,6 +196,7 @@ export function Register() {
           {loading ? "Creating..." : "Create Account"}
         </Button>
       </form>
+      <GoogleAuthButton onSuccess={() => navigate("/")} />
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Already have an account? <Link to="/login" className="font-semibold text-brand-dark hover:underline">Login</Link>
       </p>
@@ -260,6 +262,103 @@ function Field({ label, v, set, type = "text", testid }) {
     <div>
       <Label>{label}</Label>
       <Input type={type} value={v} onChange={(e) => set(e.target.value)} required className="mt-1" data-testid={testid} />
+    </div>
+  );
+}
+
+
+function GoogleAuthButton({ onSuccess }) {
+  const { googleLogin } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [showQuickGoogle, setShowQuickGoogle] = useState(false);
+  const [gEmail, setGEmail] = useState("");
+  const [gName, setGName] = useState("");
+
+  const handleGoogleClick = () => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    if (window.google && window.google.accounts && clientId) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+          setBusy(true);
+          try {
+            const u = await googleLogin({ credential: response.credential });
+            toast.success("Logged in with Google!");
+            if (onSuccess) onSuccess(u);
+          } catch (err) {
+            toast.error(apiError(err));
+          } finally {
+            setBusy(false);
+          }
+        },
+      });
+      window.google.accounts.id.prompt();
+    } else {
+      setShowQuickGoogle(true);
+    }
+  };
+
+  const handleQuickSubmit = async (e) => {
+    e.preventDefault();
+    if (!gEmail || !gEmail.includes("@")) return toast.error("Please enter your Gmail address");
+    setBusy(true);
+    try {
+      const u = await googleLogin({ email: gEmail, name: gName || gEmail.split("@")[0] });
+      toast.success("Welcome! Logged in with Google");
+      setShowQuickGoogle(false);
+      if (onSuccess) onSuccess(u);
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <div className="relative my-4 flex items-center justify-center">
+        <div className="border-t border-border w-full"></div>
+        <span className="bg-card px-3 text-xs text-muted-foreground uppercase">OR</span>
+        <div className="border-t border-border w-full"></div>
+      </div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={handleGoogleClick}
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/>
+        </svg>
+        {busy ? "Signing in with Google..." : "Continue with Google"}
+      </button>
+
+      {showQuickGoogle && (
+        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-2.5">
+          <p className="text-xs font-semibold text-slate-800">Enter your Google (Gmail) account for instant sign-in:</p>
+          <input
+            type="text"
+            placeholder="Your Name (optional)"
+            value={gName}
+            onChange={(e) => setGName(e.target.value)}
+            className="w-full rounded-lg border border-border bg-white px-3 py-2 text-xs"
+          />
+          <input
+            type="email"
+            placeholder="yourname@gmail.com"
+            value={gEmail}
+            onChange={(e) => setGEmail(e.target.value)}
+            className="w-full rounded-lg border border-border bg-white px-3 py-2 text-xs"
+          />
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={() => setShowQuickGoogle(false)} className="rounded-lg px-3 py-1.5 text-xs text-slate-600">Cancel</button>
+            <button type="button" onClick={handleQuickSubmit} disabled={busy} className="rounded-lg bg-brand px-4 py-1.5 text-xs font-semibold text-white">Continue</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

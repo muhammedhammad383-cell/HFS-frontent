@@ -43,13 +43,20 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const googleLogin = async (payload) => {
+    const { data } = await api.post("/auth/google", payload);
+    localStorage.setItem("hfs_token", data.token);
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem("hfs_token");
     setUser(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, booting, login, register, logout, refresh: loadMe, apiError }}>
+    <AuthContext.Provider value={{ user, booting, login, register, googleLogin, logout, refresh: loadMe, apiError }}>
       {children}
     </AuthContext.Provider>
   );
