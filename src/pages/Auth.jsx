@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import api, { apiError } from "@/lib/api";
@@ -270,6 +270,17 @@ function Field({ label, v, set, type = "text", testid }) {
 function GoogleAuthButton({ onSuccess }) {
   const { googleLogin } = useAuth();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!window.google && !document.getElementById("google-gsi-script")) {
+      const s = document.createElement("script");
+      s.id = "google-gsi-script";
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    }
+  }, []);
   const [showQuickGoogle, setShowQuickGoogle] = useState(false);
   const [gEmail, setGEmail] = useState("");
   const [gName, setGName] = useState("");
