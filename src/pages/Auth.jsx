@@ -275,15 +275,35 @@ function GoogleAuthButton({ onSuccess }) {
   const [gName, setGName] = useState("");
 
   const handleGoogleClick = () => {
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    if (window.google && window.google.accounts && clientId) {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "318002719665-0vpjensp1ditvul67rf39k8oteknrhvd.apps.googleusercontent.com";
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "openid email profile",
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            setBusy(true);
+            try {
+              const u = await googleLogin({ access_token: tokenResponse.access_token });
+              toast.success("Welcome! Logged in with Google");
+              if (onSuccess) onSuccess(u);
+            } catch (err) {
+              toast.error(apiError(err));
+            } finally {
+              setBusy(false);
+            }
+          }
+        },
+      });
+      tokenClient.requestAccessToken({ prompt: "select_account" });
+    } else if (window.google && window.google.accounts && window.google.accounts.id) {
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async (response) => {
           setBusy(true);
           try {
             const u = await googleLogin({ credential: response.credential });
-            toast.success("Logged in with Google!");
+            toast.success("Welcome! Logged in with Google");
             if (onSuccess) onSuccess(u);
           } catch (err) {
             toast.error(apiError(err));
@@ -294,7 +314,7 @@ function GoogleAuthButton({ onSuccess }) {
       });
       window.google.accounts.id.prompt();
     } else {
-      setShowQuickGoogle(true);
+      toast.error("Google Sign-In is loading, please tap again in 2 seconds.");
     }
   };
 
