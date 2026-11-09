@@ -129,7 +129,17 @@ export default function ProductDetail() {
               "Black": "#1E293B",
               "White": "#F8FAFC",
               "Green": "#15803D",
-              "Purple": "#7E22CE"
+              "Purple": "#7E22CE",
+              "Yellow": "#EAB308",
+              "Orange": "#F97316",
+              "Teal": "#0D9488",
+              "Rose Gold": "#B76E79",
+              "Olive": "#65A30D",
+              "Silver": "#C0C0C0",
+              "Lavender": "#A855F7",
+              "Peach": "#FDBA74",
+              "Wine": "#722F37",
+              "Mustard": "#CA8A04"
             };
 
             const specs = Array.isArray(p.specifications) ? p.specifications : [];
@@ -151,8 +161,7 @@ export default function ProductDetail() {
               inStockColors = matched.length > 0 ? [matched[0]] : ["Beige"];
             }
 
-            const standardCatalogColors = ["Beige", "Golden", "Maroon", "Pink"];
-            const displayColors = Array.from(new Set([...inStockColors, ...standardCatalogColors]));
+            const displayColors = Array.from(new Set(inStockColors));
             const activeColor = inStockColors.includes(selectedColor) ? selectedColor : inStockColors[0];
 
             // 2. Determine Exact Dimensions from Specifications, Product field, or Product Title

@@ -154,15 +154,18 @@ function Overview() {
   );
 }
 
-const EMPTY_PRODUCT = { name: "", category_id: "", description: "", price: "", sale_price: "", stock: "", sku: "", images: [""], specifications: [{ key: "", value: "" }] };
+const EMPTY_PRODUCT = { name: "", category_id: "", description: "", price: "", sale_price: "", stock: "", sku: "", colors: "Beige, Maroon, Pink, Golden", images: [""], specifications: [{ key: "", value: "" }] };
 
 function ProductForm({ initial, cats, onSave, onClose }) {
   const [f, setF] = useState(initial || EMPTY_PRODUCT);
   const save = () => {
     if (!f.name || !f.category_id || !f.price) { toast.error("Name, category and price are required"); return; }
+    const colorStr = Array.isArray(f.colors) ? f.colors.join(", ") : (f.colors ?? "Beige, Maroon, Pink, Golden");
+    const colorArr = colorStr.split(",").map(s => s.trim()).filter(Boolean);
     onSave({
       ...f, price: parseFloat(f.price), sale_price: f.sale_price ? parseFloat(f.sale_price) : null,
       stock: parseInt(f.stock || 0), images: f.images.filter(Boolean),
+      colors: colorArr,
       specifications: f.specifications.filter((s) => s.key),
     });
   };
@@ -241,6 +244,31 @@ function ProductForm({ initial, cats, onSave, onClose }) {
               >+ Add another image URL</button>
             </div>
           </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <Label className="text-xs font-bold text-slate-800">Colours (Tap or Select All)</Label>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setF({ ...f, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All</button>
+            <button type="button" onClick={() => setF({ ...f, colors: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 mb-2">
+          {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
+            const raw = Array.isArray(f.colors) ? f.colors.join(", ") : (f.colors ?? "Beige, Maroon, Pink, Golden");
+            const list = raw.split(",").map(s => s.trim()).filter(Boolean);
+            const active = list.some(i => i.toLowerCase() === name.toLowerCase());
+            return (
+              <button key={name} type="button" onClick={() => {
+                const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
+                setF({ ...f, colors: next.join(", ") });
+              }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                {active ? "✓ " : "+ "}{name}
+              </button>
+            );
+          })}
+        </div>
+        <Input value={Array.isArray(f.colors) ? f.colors.join(", ") : (f.colors ?? "Beige, Maroon, Pink, Golden")} placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" onChange={e => setF({ ...f, colors: e.target.value })} className="text-xs bg-white" />
+      </div>
       <div>
         <Label>Specifications</Label>
         {f.specifications.map((s, i) => (
