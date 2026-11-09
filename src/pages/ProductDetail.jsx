@@ -19,6 +19,7 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState("Beige");
+  const [selectedPack, setSelectedPack] = useState("");
   const [unit, setUnit] = useState("in");
   const [pincode, setPincode] = useState("");
   const [pinResult, setPinResult] = useState(null);
@@ -268,7 +269,56 @@ export default function ProductDetail() {
                   </div>
                 </div>
 
-                {/* Product Dimensions & Sample Size Guide */}
+                {/* Pack Options Selector (Pack of 2, 6, 12, etc.) */}
+              {(() => {
+                const specPacks = getSpec(/^(pack|packs|pack size|set|set of)$/i);
+                let packList = [];
+                if (Array.isArray(p.packs) && p.packs.length > 0) {
+                  packList = p.packs.map(x => x.trim()).filter(Boolean);
+                } else if (typeof p.packs === "string" && p.packs.trim()) {
+                  packList = p.packs.split(",").map(x => x.trim()).filter(Boolean);
+                } else if (specPacks) {
+                  packList = specPacks.split(",").map(x => x.trim()).filter(Boolean);
+                } else {
+                  const titlePack = (p.name || "").match(/\b(Pack of \d+|Set of \d+|\d+\s*Pcs)\b/i);
+                  if (titlePack) packList = [titlePack[1]];
+                }
+                if (!packList.length) return null;
+                const activePack = packList.includes(selectedPack) ? selectedPack : packList[0];
+                return (
+                  <div className="border-t border-border pt-3.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        📦 Pack Size: <span className="text-brand-dark">{activePack}</span>
+                      </span>
+                      <span className="text-[11px] font-medium text-emerald-700">
+                        {packList.length} {packList.length === 1 ? "Option" : "Options"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {packList.map((pk) => {
+                        const isPkSel = activePack.toLowerCase() === pk.toLowerCase();
+                        return (
+                          <button
+                            key={pk}
+                            type="button"
+                            onClick={() => setSelectedPack(pk)}
+                            className={`rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                              isPkSel
+                                ? "border-brand bg-amber-50/90 text-slate-900 shadow-sm ring-1 ring-brand"
+                                : "border-border bg-white text-slate-700 hover:border-slate-300"
+                            }`}
+                          >
+                            {isPkSel ? "✓ " : ""}{pk}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Product Dimensions & Sample Size Guide */}
                 <div className="border-t border-border pt-3.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">

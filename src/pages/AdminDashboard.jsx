@@ -257,8 +257,10 @@ function Sellers() {
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
       const finalMainImage = combinedImages[0] || form.image || "";
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const specs = [
         { key: "Color", value: colorList.join(", ") },
+        { key: "Packs", value: packList.join(", ") },
         { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
         { key: "color_images", value: JSON.stringify(colorImgs) }
       ];
@@ -440,6 +442,30 @@ function Sellers() {
                       </div>
                     )}
                   </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <label className="text-xs font-bold text-slate-800">3. Available Pack Options (Tap to select)</label>
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => setForm({ ...form, packs: "Pack of 1, Pack of 2, Pack of 3, Pack of 4, Pack of 6, Pack of 10, Pack of 12" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All Packs</button>
+                        <button type="button" onClick={() => setForm({ ...form, packs: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {["Pack of 1", "Pack of 2", "Pack of 3", "Pack of 4", "Pack of 6", "Pack of 10", "Pack of 12"].map(pName => {
+                        const pList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+                        const active = pList.some(i => i.toLowerCase() === pName.toLowerCase());
+                        return (
+                          <button key={pName} type="button" onClick={() => {
+                            const next = active ? pList.filter(i => i.toLowerCase() !== pName.toLowerCase()) : [...pList, pName];
+                            setForm({ ...form, packs: next.join(", ") });
+                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
+                            {active ? "✓ " : "+ "}{pName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected packs or type custom pack (e.g. Pack of 5, Pack of 20)" value={form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} onChange={e => setForm({...form, packs: e.target.value})} />
+                  </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
                     <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="16 x 14 x 3 inches (40 x 35 cm)" value={form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"} onChange={e => setForm({...form, dimensions: e.target.value})} />
@@ -569,8 +595,10 @@ function ProductApprovals() {
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
       const finalMainImage = combinedImages[0] || form.image || "";
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const specs = [
         { key: "Color", value: colorList.join(", ") },
+        { key: "Packs", value: packList.join(", ") },
         { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
         { key: "color_images", value: JSON.stringify(colorImgs) }
       ];
@@ -682,8 +710,10 @@ function AdminOrders() {
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
       const finalMainImage = combinedImages[0] || form.image || "";
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const specs = [
         { key: "Color", value: colorList.join(", ") },
+        { key: "Packs", value: packList.join(", ") },
         { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
         { key: "color_images", value: JSON.stringify(colorImgs) }
       ];
@@ -925,6 +955,30 @@ function AdminOrders() {
                         </div>
                       </div>
                     )}
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <label className="text-xs font-bold text-slate-800">3. Available Pack Options (Tap to select)</label>
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => setForm({ ...form, packs: "Pack of 1, Pack of 2, Pack of 3, Pack of 4, Pack of 6, Pack of 10, Pack of 12" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All Packs</button>
+                        <button type="button" onClick={() => setForm({ ...form, packs: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {["Pack of 1", "Pack of 2", "Pack of 3", "Pack of 4", "Pack of 6", "Pack of 10", "Pack of 12"].map(pName => {
+                        const pList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+                        const active = pList.some(i => i.toLowerCase() === pName.toLowerCase());
+                        return (
+                          <button key={pName} type="button" onClick={() => {
+                            const next = active ? pList.filter(i => i.toLowerCase() !== pName.toLowerCase()) : [...pList, pName];
+                            setForm({ ...form, packs: next.join(", ") });
+                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
+                            {active ? "✓ " : "+ "}{pName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected packs or type custom pack (e.g. Pack of 5, Pack of 20)" value={form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} onChange={e => setForm({...form, packs: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>

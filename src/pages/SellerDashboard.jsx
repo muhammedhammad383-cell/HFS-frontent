@@ -168,7 +168,9 @@ function ProductForm({ initial, cats, onSave, onClose }) {
       (colorImgs[c] || []).forEach(u => { if (u && !extraImgs.includes(u)) extraImgs.push(u); });
     });
     const combinedImgs = [...f.images.filter(Boolean), ...extraImgs];
-    const cleanSpecs = f.specifications.filter((s) => s.key && s.key !== "color_images");
+    const cleanSpecs = f.specifications.filter((s) => s.key && s.key !== "color_images" && s.key !== "Packs");
+    const packStr = f.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12";
+    if (packStr.trim()) cleanSpecs.push({ key: "Packs", value: packStr.trim() });
     if (Object.keys(colorImgs).length > 0) {
       cleanSpecs.push({ key: "color_images", value: JSON.stringify(colorImgs) });
     }
@@ -278,6 +280,30 @@ function ProductForm({ initial, cats, onSave, onClose }) {
           })}
         </div>
         <Input value={Array.isArray(f.colors) ? f.colors.join(", ") : (f.colors ?? "Beige, Maroon, Pink, Golden")} placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" onChange={e => setF({ ...f, colors: e.target.value })} className="text-xs bg-white" />
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <Label className="text-xs font-bold text-slate-800">Available Pack Options (Tap or Select All)</Label>
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setF({ ...f, packs: "Pack of 1, Pack of 2, Pack of 3, Pack of 4, Pack of 6, Pack of 10, Pack of 12" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All Packs</button>
+            <button type="button" onClick={() => setF({ ...f, packs: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 mb-2">
+          {["Pack of 1", "Pack of 2", "Pack of 3", "Pack of 4", "Pack of 6", "Pack of 10", "Pack of 12"].map(pName => {
+            const list = (f.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+            const active = list.some(i => i.toLowerCase() === pName.toLowerCase());
+            return (
+              <button key={pName} type="button" onClick={() => {
+                const next = active ? list.filter(i => i.toLowerCase() !== pName.toLowerCase()) : [...list, pName];
+                setF({ ...f, packs: next.join(", ") });
+              }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                {active ? "✓ " : "+ "}{pName}
+              </button>
+            );
+          })}
+        </div>
+        <Input value={f.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} placeholder="Selected packs (e.g. Pack of 2, Pack of 6, Pack of 12)" onChange={e => setF({ ...f, packs: e.target.value })} className="text-xs bg-white" />
       </div>
       <div>
         <Label>Specifications</Label>
