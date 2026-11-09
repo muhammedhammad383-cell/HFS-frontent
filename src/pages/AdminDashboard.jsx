@@ -325,8 +325,28 @@ function Sellers() {
               <div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs font-semibold text-slate-700">Colours (comma separated)</label>
-                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Beige, Maroon, Pink, Golden" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <label className="text-xs font-bold text-slate-800">Colours (Tap or Select All)</label>
+                      <div className="flex gap-1">
+                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All</button>
+                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
+                        const list = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+                        const active = list.some(i => i.toLowerCase() === name.toLowerCase());
+                        return (
+                          <button key={name} type="button" onClick={() => {
+                            const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
+                            setForm({ ...form, colors: next.join(", ") });
+                          }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                            {active ? "✓ " : "+ "}{name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
@@ -679,8 +699,28 @@ function AdminOrders() {
               <div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs font-semibold text-slate-700">Colours (comma separated)</label>
-                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Beige, Maroon, Pink, Golden" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <label className="text-xs font-bold text-slate-800">Colours (Tap or Select All)</label>
+                      <div className="flex gap-1">
+                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All</button>
+                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
+                        const list = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+                        const active = list.some(i => i.toLowerCase() === name.toLowerCase());
+                        return (
+                          <button key={name} type="button" onClick={() => {
+                            const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
+                            setForm({ ...form, colors: next.join(", ") });
+                          }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                            {active ? "✓ " : "+ "}{name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
