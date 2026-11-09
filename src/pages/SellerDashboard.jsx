@@ -162,11 +162,21 @@ function ProductForm({ initial, cats, onSave, onClose }) {
     if (!f.name || !f.category_id || !f.price) { toast.error("Name, category and price are required"); return; }
     const colorStr = Array.isArray(f.colors) ? f.colors.join(", ") : (f.colors ?? "Beige, Maroon, Pink, Golden");
     const colorArr = colorStr.split(",").map(s => s.trim()).filter(Boolean);
+    const colorImgs = f.colorImages || {};
+    const extraImgs = [];
+    colorArr.forEach(c => {
+      (colorImgs[c] || []).forEach(u => { if (u && !extraImgs.includes(u)) extraImgs.push(u); });
+    });
+    const combinedImgs = [...f.images.filter(Boolean), ...extraImgs];
+    const cleanSpecs = f.specifications.filter((s) => s.key && s.key !== "color_images");
+    if (Object.keys(colorImgs).length > 0) {
+      cleanSpecs.push({ key: "color_images", value: JSON.stringify(colorImgs) });
+    }
     onSave({
       ...f, price: parseFloat(f.price), sale_price: f.sale_price ? parseFloat(f.sale_price) : null,
-      stock: parseInt(f.stock || 0), images: f.images.filter(Boolean),
+      stock: parseInt(f.stock || 0), images: combinedImgs,
       colors: colorArr,
-      specifications: f.specifications.filter((s) => s.key),
+      specifications: cleanSpecs,
     });
   };
   return (

@@ -246,8 +246,28 @@ function Sellers() {
     e.preventDefault();
     setBusy(true);
     try {
+      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const colorImgs = form.colorImages || {};
+      const allColorImgs = [];
+      colorList.forEach(c => {
+        const arr = colorImgs[c] || [];
+        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
+      });
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs, ...allColorImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+      const finalMainImage = combinedImages[0] || form.image || "";
+      const specs = [
+        { key: "Color", value: colorList.join(", ") },
+        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
+        { key: "color_images", value: JSON.stringify(colorImgs) }
+      ];
       await api.post("/admin/products", {
         ...form,
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        specifications: specs,
         price: Number(form.price),
         sale_price: Number(form.sale_price || form.price),
       });
@@ -323,16 +343,16 @@ function Sellers() {
                 {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                      <label className="text-xs font-bold text-slate-800">Colours (Tap or Select All)</label>
-                      <div className="flex gap-1">
-                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All</button>
-                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+                <div className="space-y-3 mb-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <label className="text-xs font-bold text-slate-800">1. Select Product Colours (Tap or Select All)</label>
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All</button>
+                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1 mb-2">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
                         const list = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
                         const active = list.some(i => i.toLowerCase() === name.toLowerCase());
@@ -340,13 +360,85 @@ function Sellers() {
                           <button key={name} type="button" onClick={() => {
                             const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
                             setForm({ ...form, colors: next.join(", ") });
-                          }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
                             {active ? "✓ " : "+ "}{name}
                           </button>
                         );
                       })}
                     </div>
-                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected colours or type new colour separated by comma (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+
+                    {/* Color-Wise Multi-Photo Uploader (4-5+ photos per colour) */}
+                    {((form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
+                      <div className="mt-3 border-t border-slate-200 pt-2.5">
+                        <p className="text-[11px] font-bold text-slate-800 mb-2">2. Upload Photos for Each Colour (4-5+ Photos per Colour supported)</p>
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {(form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean).map((colName) => {
+                            const colPhotos = (form.colorImages && form.colorImages[colName]) || [];
+                            return (
+                              <div key={colName} className="rounded-lg border border-slate-200 bg-white p-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-bold text-slate-800">{colName} <span className="text-[10px] font-normal text-slate-500">({colPhotos.length} photos)</span></span>
+                                  <label className="cursor-pointer rounded-md bg-amber-50 border border-amber-300 px-2.5 py-1 text-[10px] font-bold text-amber-900 hover:bg-amber-100">
+                                    📷 + Add {colName} Photos
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        if (!files.length) return;
+                                        Promise.all(
+                                          files.map(file => new Promise(resolve => {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => resolve(reader.result);
+                                            reader.readAsDataURL(file);
+                                          }))
+                                        ).then(newImgs => {
+                                          setForm(prev => {
+                                            const existingMap = prev.colorImages || {};
+                                            const prevColImgs = existingMap[colName] || [];
+                                            const updatedColImgs = [...prevColImgs, ...newImgs];
+                                            return {
+                                              ...prev,
+                                              image: prev.image || newImgs[0],
+                                              colorImages: { ...existingMap, [colName]: updatedColImgs }
+                                            };
+                                          });
+                                        });
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+                                {colPhotos.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {colPhotos.map((imgSrc, idx) => (
+                                      <div key={idx} className="relative group h-12 w-12 rounded border overflow-hidden">
+                                        <img src={imgSrc} alt={colName} className="h-full w-full object-cover" />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setForm(prev => {
+                                              const existingMap = prev.colorImages || {};
+                                              const filtered = (existingMap[colName] || []).filter((_, i) => i !== idx);
+                                              return { ...prev, colorImages: { ...existingMap, [colName]: filtered } };
+                                            });
+                                          }}
+                                          className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-1 rounded-bl"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
@@ -466,8 +558,28 @@ function ProductApprovals() {
     e.preventDefault();
     setBusy(true);
     try {
+      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const colorImgs = form.colorImages || {};
+      const allColorImgs = [];
+      colorList.forEach(c => {
+        const arr = colorImgs[c] || [];
+        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
+      });
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs, ...allColorImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+      const finalMainImage = combinedImages[0] || form.image || "";
+      const specs = [
+        { key: "Color", value: colorList.join(", ") },
+        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
+        { key: "color_images", value: JSON.stringify(colorImgs) }
+      ];
       await api.post("/admin/products", {
         ...form,
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        specifications: specs,
         price: Number(form.price),
         sale_price: Number(form.sale_price || form.price),
       });
@@ -559,8 +671,28 @@ function AdminOrders() {
     e.preventDefault();
     setBusy(true);
     try {
+      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const colorImgs = form.colorImages || {};
+      const allColorImgs = [];
+      colorList.forEach(c => {
+        const arr = colorImgs[c] || [];
+        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
+      });
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs, ...allColorImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+      const finalMainImage = combinedImages[0] || form.image || "";
+      const specs = [
+        { key: "Color", value: colorList.join(", ") },
+        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
+        { key: "color_images", value: JSON.stringify(colorImgs) }
+      ];
       await api.post("/admin/products", {
         ...form,
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        specifications: specs,
         price: Number(form.price),
         sale_price: Number(form.sale_price || form.price),
       });
@@ -697,16 +829,16 @@ function AdminOrders() {
                 {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                      <label className="text-xs font-bold text-slate-800">Colours (Tap or Select All)</label>
-                      <div className="flex gap-1">
-                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">✓ Select All</button>
-                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-0.5 text-[10px] text-slate-600 bg-white">Clear</button>
+                <div className="space-y-3 mb-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <label className="text-xs font-bold text-slate-800">1. Select Product Colours (Tap or Select All)</label>
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All</button>
+                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1 mb-2">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
                         const list = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
                         const active = list.some(i => i.toLowerCase() === name.toLowerCase());
@@ -714,13 +846,85 @@ function AdminOrders() {
                           <button key={name} type="button" onClick={() => {
                             const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
                             setForm({ ...form, colors: next.join(", ") });
-                          }} className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${active ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>
+                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
                             {active ? "✓ " : "+ "}{name}
                           </button>
                         );
                       })}
                     </div>
-                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="Selected colours or type new colour (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected colours or type new colour separated by comma (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
+
+                    {/* Color-Wise Multi-Photo Uploader (4-5+ photos per colour) */}
+                    {((form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
+                      <div className="mt-3 border-t border-slate-200 pt-2.5">
+                        <p className="text-[11px] font-bold text-slate-800 mb-2">2. Upload Photos for Each Colour (4-5+ Photos per Colour supported)</p>
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {(form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean).map((colName) => {
+                            const colPhotos = (form.colorImages && form.colorImages[colName]) || [];
+                            return (
+                              <div key={colName} className="rounded-lg border border-slate-200 bg-white p-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-bold text-slate-800">{colName} <span className="text-[10px] font-normal text-slate-500">({colPhotos.length} photos)</span></span>
+                                  <label className="cursor-pointer rounded-md bg-amber-50 border border-amber-300 px-2.5 py-1 text-[10px] font-bold text-amber-900 hover:bg-amber-100">
+                                    📷 + Add {colName} Photos
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        if (!files.length) return;
+                                        Promise.all(
+                                          files.map(file => new Promise(resolve => {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => resolve(reader.result);
+                                            reader.readAsDataURL(file);
+                                          }))
+                                        ).then(newImgs => {
+                                          setForm(prev => {
+                                            const existingMap = prev.colorImages || {};
+                                            const prevColImgs = existingMap[colName] || [];
+                                            const updatedColImgs = [...prevColImgs, ...newImgs];
+                                            return {
+                                              ...prev,
+                                              image: prev.image || newImgs[0],
+                                              colorImages: { ...existingMap, [colName]: updatedColImgs }
+                                            };
+                                          });
+                                        });
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+                                {colPhotos.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {colPhotos.map((imgSrc, idx) => (
+                                      <div key={idx} className="relative group h-12 w-12 rounded border overflow-hidden">
+                                        <img src={imgSrc} alt={colName} className="h-full w-full object-cover" />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setForm(prev => {
+                                              const existingMap = prev.colorImages || {};
+                                              const filtered = (existingMap[colName] || []).filter((_, i) => i !== idx);
+                                              return { ...prev, colorImages: { ...existingMap, [colName]: filtered } };
+                                            });
+                                          }}
+                                          className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-1 rounded-bl"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>

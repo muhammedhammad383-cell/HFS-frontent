@@ -75,22 +75,40 @@ export default function ProductDetail() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row">
-          <div className="flex gap-2 sm:flex-col">
-            {(p.images || []).map((img, i) => (
-              <button key={i} onClick={() => setActiveImg(i)} data-testid={`thumb-${i}`}
-                className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${activeImg === i ? "border-brand" : "border-border"}`}>
-                <img src={img} alt="" className="h-full w-full object-cover" />
-              </button>
-            ))}
-          </div>
-          <div className="group flex-1 overflow-hidden rounded-2xl border border-border bg-white">
-            <div className="aspect-square w-full overflow-hidden">
-              <img src={p.images?.[activeImg]} alt={p.name} className="zoom-img h-full w-full object-cover" data-testid="main-product-image" />
+        {/* Gallery (Color-Aware Multi-Photo Gallery) */}
+        {(() => {
+          let colorImgMap = {};
+          const ciSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "color_images");
+          if (ciSpec && ciSpec.value) {
+            try { colorImgMap = JSON.parse(ciSpec.value); } catch (e) {}
+          }
+          if (p.colorImages && typeof p.colorImages === "object") {
+            colorImgMap = { ...colorImgMap, ...p.colorImages };
+          }
+          const matchedColorKey = Object.keys(colorImgMap).find(k => k.toLowerCase() === (selectedColor || "").toLowerCase());
+          const colorSpecificList = matchedColorKey && Array.isArray(colorImgMap[matchedColorKey]) && colorImgMap[matchedColorKey].length > 0
+            ? colorImgMap[matchedColorKey]
+            : null;
+          const activeGallery = colorSpecificList || (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []));
+          const safeIdx = activeImg < activeGallery.length ? activeImg : 0;
+          return (
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <div className="flex gap-2 overflow-x-auto sm:flex-col">
+                {activeGallery.map((img, i) => (
+                  <button key={i} onClick={() => setActiveImg(i)} data-testid={`thumb-${i}`}
+                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 ${safeIdx === i ? "border-brand" : "border-border"}`}>
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              <div className="group flex-1 overflow-hidden rounded-2xl border border-border bg-white">
+                <div className="aspect-square w-full overflow-hidden">
+                  <img src={activeGallery[safeIdx]} alt={p.name} className="zoom-img h-full w-full object-cover" data-testid="main-product-image" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Info */}
         <div>
