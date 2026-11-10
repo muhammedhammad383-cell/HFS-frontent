@@ -121,8 +121,27 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-4 flex items-end gap-3">
-            <span className="font-heading text-3xl font-black text-slate-900">{inr(price)}</span>
-            {pct > 0 && <><span className="text-lg text-muted-foreground line-through">{inr(p.price)}</span><span className="pb-1 text-lg font-bold text-trust">{pct}% off</span></>}
+            {(() => {
+              let pkMap = {};
+              const ppSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "pack_prices");
+              if (ppSpec && ppSpec.value) {
+                try { pkMap = JSON.parse(ppSpec.value); } catch (e) {}
+              }
+              const spPacks = (p.specifications || []).find(s => /^(pack|packs|pack size|set|set of)$/i.test((s.key || "").trim()))?.value;
+              const pkList = spPacks ? spPacks.split(",").map(x => x.trim()).filter(Boolean) : [];
+              const curPack = pkList.includes(selectedPack) ? selectedPack : (pkList[0] || "");
+              const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
+              const pkData = matchKey ? pkMap[matchKey] : null;
+              const dynSale = pkData && pkData.sale_price ? Number(pkData.sale_price) : price;
+              const dynMrp = pkData && pkData.price ? Number(pkData.price) : Number(p.price || dynSale);
+              const dynPct = dynMrp > dynSale ? Math.round(((dynMrp - dynSale) / dynMrp) * 100) : pct;
+              return (
+                <>
+                  <span className="font-heading text-3xl font-black text-slate-900">{inr(dynSale)}</span>
+                  {dynPct > 0 && <><span className="text-lg text-muted-foreground line-through">{inr(dynMrp)}</span><span className="pb-1 text-lg font-bold text-trust">{dynPct}% off</span></>}
+                </>
+              );
+            })()}
           </div>
           <p className="mt-1 text-sm font-medium text-trust">{p.stock > 0 ? `In stock (${p.stock} available)` : "Out of stock"}</p>
 
@@ -309,7 +328,21 @@ export default function ProductDetail() {
                                 : "border-border bg-white text-slate-700 hover:border-slate-300"
                             }`}
                           >
-                            {isPkSel ? "✓ " : ""}{pk}
+                            {(() => {
+                              let pkMap = {};
+                              const ppSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "pack_prices");
+                              if (ppSpec && ppSpec.value) {
+                                try { pkMap = JSON.parse(ppSpec.value); } catch (e) {}
+                              }
+                              const mk = Object.keys(pkMap).find(k => k.toLowerCase() === pk.toLowerCase());
+                              const pSale = mk && pkMap[mk]?.sale_price ? Number(pkMap[mk].sale_price) : null;
+                              return (
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span>{isPkSel ? "✓ " : ""}{pk}</span>
+                                  {pSale && <span className="mt-0.5 text-[10px] font-extrabold text-amber-800">{inr(pSale)}</span>}
+                                </div>
+                              );
+                            })()}
                           </button>
                         );
                       })}

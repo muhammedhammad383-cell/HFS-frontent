@@ -256,22 +256,31 @@ function Sellers() {
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
-      const finalMainImage = combinedImages[0] || form.image || "";
+      const finalMainImage = String(combinedImages[0] || form.image || "");
       const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const packPrices = form.packPrices || {};
+      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
       const specs = [
+        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
         { key: "Color", value: colorList.join(", ") },
         { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
-        { key: "color_images", value: JSON.stringify(colorImgs) }
+        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
+        { key: "color_images", value: JSON.stringify(colorImgs) },
+        { key: "pack_prices", value: JSON.stringify(packPrices) }
       ];
       await api.post("/admin/products", {
-        ...form,
+        name: String(form.name || ""),
+        category: String(form.category || "Saree Covers"),
+        description: String(form.description || ""),
+        sku: String(form.sku || ""),
+        stock: Number(form.stock ?? 50),
         image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specs,
-        price: Number(form.price),
-        sale_price: Number(form.sale_price || form.price),
+        price: Number(form.price || 0),
+        sale_price: Number(form.sale_price || form.price || 0),
       });
       toast.success("Product added successfully!");
       setAdding(false);
@@ -465,6 +474,49 @@ function Sellers() {
                       })}
                     </div>
                     <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected packs or type custom pack (e.g. Pack of 5, Pack of 20)" value={form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} onChange={e => setForm({...form, packs: e.target.value})} />
+                    {((form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
+                      <div className="mt-3 border-t border-slate-200 pt-2.5">
+                        <p className="text-[11px] font-bold text-slate-800 mb-2">💰 Set Price for Each Pack (Customer selects pack → price auto updates)</p>
+                        <div className="space-y-1.5">
+                          {(form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean).map(pkName => {
+                            const pkObj = (form.packPrices && form.packPrices[pkName]) || {};
+                            return (
+                              <div key={pkName} className="grid grid-cols-3 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+                                <span className="text-xs font-bold text-slate-800">{pkName}</span>
+                                <input
+                                  type="number"
+                                  placeholder="Sale ₹ (e.g. 499)"
+                                  value={pkObj.sale_price ?? ""}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setForm(prev => {
+                                      const map = prev.packPrices || {};
+                                      const cur = map[pkName] || {};
+                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, sale_price: val } } };
+                                    });
+                                  }}
+                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="MRP ₹ (e.g. 999)"
+                                  value={pkObj.price ?? ""}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setForm(prev => {
+                                      const map = prev.packPrices || {};
+                                      const cur = map[pkName] || {};
+                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, price: val } } };
+                                    });
+                                  }}
+                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
@@ -594,22 +646,31 @@ function ProductApprovals() {
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
-      const finalMainImage = combinedImages[0] || form.image || "";
+      const finalMainImage = String(combinedImages[0] || form.image || "");
       const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const packPrices = form.packPrices || {};
+      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
       const specs = [
+        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
         { key: "Color", value: colorList.join(", ") },
         { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
-        { key: "color_images", value: JSON.stringify(colorImgs) }
+        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
+        { key: "color_images", value: JSON.stringify(colorImgs) },
+        { key: "pack_prices", value: JSON.stringify(packPrices) }
       ];
       await api.post("/admin/products", {
-        ...form,
+        name: String(form.name || ""),
+        category: String(form.category || "Saree Covers"),
+        description: String(form.description || ""),
+        sku: String(form.sku || ""),
+        stock: Number(form.stock ?? 50),
         image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specs,
-        price: Number(form.price),
-        sale_price: Number(form.sale_price || form.price),
+        price: Number(form.price || 0),
+        sale_price: Number(form.sale_price || form.price || 0),
       });
       toast.success("Product added successfully!");
       setAdding(false);
@@ -709,22 +770,31 @@ function AdminOrders() {
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs, ...allColorImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
-      const finalMainImage = combinedImages[0] || form.image || "";
+      const finalMainImage = String(combinedImages[0] || form.image || "");
       const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const packPrices = form.packPrices || {};
+      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
       const specs = [
+        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
         { key: "Color", value: colorList.join(", ") },
         { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)" },
-        { key: "color_images", value: JSON.stringify(colorImgs) }
+        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
+        { key: "color_images", value: JSON.stringify(colorImgs) },
+        { key: "pack_prices", value: JSON.stringify(packPrices) }
       ];
       await api.post("/admin/products", {
-        ...form,
+        name: String(form.name || ""),
+        category: String(form.category || "Saree Covers"),
+        description: String(form.description || ""),
+        sku: String(form.sku || ""),
+        stock: Number(form.stock ?? 50),
         image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specs,
-        price: Number(form.price),
-        sale_price: Number(form.sale_price || form.price),
+        price: Number(form.price || 0),
+        sale_price: Number(form.sale_price || form.price || 0),
       });
       toast.success("Product added successfully!");
       setAdding(false);
@@ -979,6 +1049,49 @@ function AdminOrders() {
                       })}
                     </div>
                     <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected packs or type custom pack (e.g. Pack of 5, Pack of 20)" value={form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} onChange={e => setForm({...form, packs: e.target.value})} />
+                    {((form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
+                      <div className="mt-3 border-t border-slate-200 pt-2.5">
+                        <p className="text-[11px] font-bold text-slate-800 mb-2">💰 Set Price for Each Pack (Customer selects pack → price auto updates)</p>
+                        <div className="space-y-1.5">
+                          {(form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean).map(pkName => {
+                            const pkObj = (form.packPrices && form.packPrices[pkName]) || {};
+                            return (
+                              <div key={pkName} className="grid grid-cols-3 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+                                <span className="text-xs font-bold text-slate-800">{pkName}</span>
+                                <input
+                                  type="number"
+                                  placeholder="Sale ₹ (e.g. 499)"
+                                  value={pkObj.sale_price ?? ""}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setForm(prev => {
+                                      const map = prev.packPrices || {};
+                                      const cur = map[pkName] || {};
+                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, sale_price: val } } };
+                                    });
+                                  }}
+                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="MRP ₹ (e.g. 999)"
+                                  value={pkObj.price ?? ""}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setForm(prev => {
+                                      const map = prev.packPrices || {};
+                                      const cur = map[pkName] || {};
+                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, price: val } } };
+                                    });
+                                  }}
+                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
