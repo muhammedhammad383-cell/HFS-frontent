@@ -247,40 +247,66 @@ function Sellers() {
     setBusy(true);
     try {
       const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const colorImgs = form.colorImages || {};
-      const allColorImgs = [];
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+
+      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
+      const colorIndexMap = {};
       colorList.forEach(c => {
         const arr = colorImgs[c] || [];
-        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
+        const indices = [];
+        arr.forEach(u => {
+          if (!u) return;
+          let idx = combinedImages.indexOf(u);
+          if (idx === -1) {
+            combinedImages.push(u);
+            idx = combinedImages.length - 1;
+          }
+          indices.push(idx);
+        });
+        if (indices.length > 0) colorIndexMap[c] = indices;
       });
-      const mainImgs = (form.images || []).filter(Boolean);
-      const combinedImages = [...mainImgs, ...allColorImgs];
-      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+
       const finalMainImage = String(combinedImages[0] || form.image || "");
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const packPrices = form.packPrices || {};
-      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
-      const specs = [
-        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
-        { key: "Color", value: colorList.join(", ") },
-        { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
-        { key: "color_images", value: JSON.stringify(colorImgs) },
-        { key: "pack_prices", value: JSON.stringify(packPrices) }
+
+      // Build specifications as a clean Key-Value Object (exact format required by backend)
+      const specsObj = {};
+      const specList = form.specs_list || [
+        { key: "Material", value: "Non-Woven / Satin" },
+        { key: "Closure", value: "Heavy Duty Zipper" }
       ];
+      specList.forEach(item => {
+        if (item && item.key && item.key.trim()) {
+          specsObj[item.key.trim()] = String(item.value || "");
+        }
+      });
+      specsObj["Color"] = colorList.join(", ");
+      specsObj["Packs"] = packList.join(", ");
+      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      if (Object.keys(colorIndexMap).length > 0) {
+        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+      }
+      if (Object.keys(packPrices).length > 0) {
+        specsObj["pack_prices"] = JSON.stringify(packPrices);
+      }
+
       await api.post("/admin/products", {
-        name: String(form.name || ""),
+        name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Saree Covers"),
         description: String(form.description || ""),
         sku: String(form.sku || ""),
         stock: Number(form.stock ?? 50),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList.join(", "),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specs,
         price: Number(form.price || 0),
         sale_price: Number(form.sale_price || form.price || 0),
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
+        specifications: specsObj,
       });
       toast.success("Product added successfully!");
       setAdding(false);
@@ -299,6 +325,113 @@ function Sellers() {
   if (!rows) return <Loader />;
   return (
     <div className="space-y-3">
+
+
+
+      {rows.map((s) => (
+        <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4" data-testid={`admin-seller-${s.id}`}>
+          <div className="grid h-11 w-11 place-items-center rounded-full bg-slate-900 font-bold text-brand-light">{s.name?.[0]}</div>
+          <div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{s.store?.name || s.name}</p><p className="text-xs text-muted-foreground">{s.email} · {s.product_count} products</p></div>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${s.seller_status === "approved" ? "bg-green-100 text-green-700" : s.seller_status === "pending" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>{s.seller_status}</span>
+          {s.seller_status !== "approved" && <Button size="sm" onClick={() => decide(s.id, "approved")} className="bg-trust text-white hover:bg-green-700" data-testid={`admin-seller-approve-button-${s.id}`} aria-label="Admin action"><Check className="h-4 w-4" /></Button>}
+          {s.seller_status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "rejected")} data-testid={`admin-seller-reject-${s.id}`} aria-label="Admin action"><X className="h-4 w-4" /></Button>}
+          <Button size="sm" variant="outline" onClick={() => block(s.id)} className={s.status === "blocked" ? "border-rose-brand text-rose-brand" : ""} aria-label="Admin action"><Ban className="h-4 w-4" /></Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductApprovals() {
+  const [rows, setRows] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+  const createProduct = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const colorImgs = form.colorImages || {};
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+
+      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
+      const colorIndexMap = {};
+      colorList.forEach(c => {
+        const arr = colorImgs[c] || [];
+        const indices = [];
+        arr.forEach(u => {
+          if (!u) return;
+          let idx = combinedImages.indexOf(u);
+          if (idx === -1) {
+            combinedImages.push(u);
+            idx = combinedImages.length - 1;
+          }
+          indices.push(idx);
+        });
+        if (indices.length > 0) colorIndexMap[c] = indices;
+      });
+
+      const finalMainImage = String(combinedImages[0] || form.image || "");
+      const packPrices = form.packPrices || {};
+
+      // Build specifications as a clean Key-Value Object (exact format required by backend)
+      const specsObj = {};
+      const specList = form.specs_list || [
+        { key: "Material", value: "Non-Woven / Satin" },
+        { key: "Closure", value: "Heavy Duty Zipper" }
+      ];
+      specList.forEach(item => {
+        if (item && item.key && item.key.trim()) {
+          specsObj[item.key.trim()] = String(item.value || "");
+        }
+      });
+      specsObj["Color"] = colorList.join(", ");
+      specsObj["Packs"] = packList.join(", ");
+      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      if (Object.keys(colorIndexMap).length > 0) {
+        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+      }
+      if (Object.keys(packPrices).length > 0) {
+        specsObj["pack_prices"] = JSON.stringify(packPrices);
+      }
+
+      await api.post("/admin/products", {
+        name: String(form.name || "Hanging Saree Cover"),
+        category: String(form.category || "Saree Covers"),
+        description: String(form.description || ""),
+        sku: String(form.sku || ""),
+        stock: Number(form.stock ?? 50),
+        price: Number(form.price || 0),
+        sale_price: Number(form.sale_price || form.price || 0),
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
+        specifications: specsObj,
+      });
+      toast.success("Product added successfully!");
+      setAdding(false);
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      if (typeof load === "function") load();
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const [filter, setFilter] = useState("all");
+  const load = () => api.get(`/admin/products${filter !== "all" ? `?status=${filter}` : ""}`).then(({ data }) => setRows(data));
+  useEffect(() => { load(); }, [filter]);
+  const decide = async (id, decision) => { await api.put(`/admin/products/${id}/decision`, { decision }); toast.success(`Product ${decision}`); load(); };
+  const flag = async (id, key, val) => { await api.put(`/admin/products/${id}/flags`, { [key]: val }); load(); };
+  const del = async (id) => { await api.delete(`/admin/products/${id}`); load(); };
+  if (!rows) return <Loader />;
+  return (
+    <div className="space-y-3">
       <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
@@ -308,7 +441,6 @@ function Sellers() {
           + Add New Product
         </Button>
       </div>
-
       {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
@@ -613,84 +745,6 @@ function Sellers() {
           </div>
         </div>
       )}
-      {rows.map((s) => (
-        <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4" data-testid={`admin-seller-${s.id}`}>
-          <div className="grid h-11 w-11 place-items-center rounded-full bg-slate-900 font-bold text-brand-light">{s.name?.[0]}</div>
-          <div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{s.store?.name || s.name}</p><p className="text-xs text-muted-foreground">{s.email} · {s.product_count} products</p></div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${s.seller_status === "approved" ? "bg-green-100 text-green-700" : s.seller_status === "pending" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>{s.seller_status}</span>
-          {s.seller_status !== "approved" && <Button size="sm" onClick={() => decide(s.id, "approved")} className="bg-trust text-white hover:bg-green-700" data-testid={`admin-seller-approve-button-${s.id}`} aria-label="Admin action"><Check className="h-4 w-4" /></Button>}
-          {s.seller_status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "rejected")} data-testid={`admin-seller-reject-${s.id}`} aria-label="Admin action"><X className="h-4 w-4" /></Button>}
-          <Button size="sm" variant="outline" onClick={() => block(s.id)} className={s.status === "blocked" ? "border-rose-brand text-rose-brand" : ""} aria-label="Admin action"><Ban className="h-4 w-4" /></Button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ProductApprovals() {
-  const [rows, setRows] = useState(null);
-  const [adding, setAdding] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
-  const createProduct = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
-      const colorImgs = form.colorImages || {};
-      const allColorImgs = [];
-      colorList.forEach(c => {
-        const arr = colorImgs[c] || [];
-        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
-      });
-      const mainImgs = (form.images || []).filter(Boolean);
-      const combinedImages = [...mainImgs, ...allColorImgs];
-      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
-      const finalMainImage = String(combinedImages[0] || form.image || "");
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
-      const packPrices = form.packPrices || {};
-      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
-      const specs = [
-        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
-        { key: "Color", value: colorList.join(", ") },
-        { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
-        { key: "color_images", value: JSON.stringify(colorImgs) },
-        { key: "pack_prices", value: JSON.stringify(packPrices) }
-      ];
-      await api.post("/admin/products", {
-        name: String(form.name || ""),
-        category: String(form.category || "Saree Covers"),
-        description: String(form.description || ""),
-        sku: String(form.sku || ""),
-        stock: Number(form.stock ?? 50),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList.join(", "),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specs,
-        price: Number(form.price || 0),
-        sale_price: Number(form.sale_price || form.price || 0),
-      });
-      toast.success("Product added successfully!");
-      setAdding(false);
-      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
-      if (typeof load === "function") load();
-    } catch (err) {
-      toast.error(apiError(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-  const [filter, setFilter] = useState("all");
-  const load = () => api.get(`/admin/products${filter !== "all" ? `?status=${filter}` : ""}`).then(({ data }) => setRows(data));
-  useEffect(() => { load(); }, [filter]);
-  const decide = async (id, decision) => { await api.put(`/admin/products/${id}/decision`, { decision }); toast.success(`Product ${decision}`); load(); };
-  const flag = async (id, key, val) => { await api.put(`/admin/products/${id}/flags`, { [key]: val }); load(); };
-  const del = async (id) => { await api.delete(`/admin/products/${id}`); load(); };
-  if (!rows) return <Loader />;
-  return (
-    <div>
       <div className="mb-4 flex gap-2">
         {["all", "pending", "approved", "rejected"].map((s) => (
           <button key={s} onClick={() => setFilter(s)} className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize ${filter === s ? "bg-brand text-white" : "bg-secondary text-slate-600"}`} data-testid={`product-filter-${s}`}>{s}</button>
@@ -761,40 +815,66 @@ function AdminOrders() {
     setBusy(true);
     try {
       const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const colorImgs = form.colorImages || {};
-      const allColorImgs = [];
+      const mainImgs = (form.images || []).filter(Boolean);
+      const combinedImages = [...mainImgs];
+      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+
+      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
+      const colorIndexMap = {};
       colorList.forEach(c => {
         const arr = colorImgs[c] || [];
-        arr.forEach(u => { if (u && !allColorImgs.includes(u)) allColorImgs.push(u); });
+        const indices = [];
+        arr.forEach(u => {
+          if (!u) return;
+          let idx = combinedImages.indexOf(u);
+          if (idx === -1) {
+            combinedImages.push(u);
+            idx = combinedImages.length - 1;
+          }
+          indices.push(idx);
+        });
+        if (indices.length > 0) colorIndexMap[c] = indices;
       });
-      const mainImgs = (form.images || []).filter(Boolean);
-      const combinedImages = [...mainImgs, ...allColorImgs];
-      if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
+
       const finalMainImage = String(combinedImages[0] || form.image || "");
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
       const packPrices = form.packPrices || {};
-      const customSpecs = Array.isArray(form.specs) ? form.specs.filter(s => s && s.key && s.value) : [];
-      const specs = [
-        ...customSpecs.map(s => ({ key: String(s.key), value: String(s.value) })),
-        { key: "Color", value: colorList.join(", ") },
-        { key: "Packs", value: packList.join(", ") },
-        { key: "Dimensions", value: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)") },
-        { key: "color_images", value: JSON.stringify(colorImgs) },
-        { key: "pack_prices", value: JSON.stringify(packPrices) }
+
+      // Build specifications as a clean Key-Value Object (exact format required by backend)
+      const specsObj = {};
+      const specList = form.specs_list || [
+        { key: "Material", value: "Non-Woven / Satin" },
+        { key: "Closure", value: "Heavy Duty Zipper" }
       ];
+      specList.forEach(item => {
+        if (item && item.key && item.key.trim()) {
+          specsObj[item.key.trim()] = String(item.value || "");
+        }
+      });
+      specsObj["Color"] = colorList.join(", ");
+      specsObj["Packs"] = packList.join(", ");
+      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      if (Object.keys(colorIndexMap).length > 0) {
+        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+      }
+      if (Object.keys(packPrices).length > 0) {
+        specsObj["pack_prices"] = JSON.stringify(packPrices);
+      }
+
       await api.post("/admin/products", {
-        name: String(form.name || ""),
+        name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Saree Covers"),
         description: String(form.description || ""),
         sku: String(form.sku || ""),
         stock: Number(form.stock ?? 50),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList.join(", "),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specs,
         price: Number(form.price || 0),
         sale_price: Number(form.sale_price || form.price || 0),
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
+        colors: colorList,
+        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
+        specifications: specsObj,
       });
       toast.success("Product added successfully!");
       setAdding(false);
@@ -874,320 +954,9 @@ function AdminOrders() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div>
-          <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
-          <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
-        </div>
-        <Button onClick={() => setAdding(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
-          + Add New Product
-        </Button>
-      </div>
 
-      {adding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
-            <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Product Name</label>
-                <input required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="e.g. Quilted Saree Cover" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">Regular Price (₹)</label>
-                  <input required type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="999" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">Sale Price (₹)</label>
-                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="599" value={form.sale_price} onChange={e => setForm({...form, sale_price: e.target.value})} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">Stock</label>
-                  <input type="number" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="50" value={form.stock ?? 50} onChange={e => setForm({...form, stock: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">SKU</label>
-                  <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="HFS-001" value={form.sku || ""} onChange={e => setForm({...form, sku: e.target.value})} />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Product Photos</label>
-                <label className="mt-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-amber-400 bg-amber-50/40 px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-amber-50">
-                  <span>📁 Choose Photo from Gallery</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result }));
-                    reader.readAsDataURL(file);
-                  }} />
-                </label>
-                <input required className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
-                {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
-              </div>
-              <div>
-                <div className="space-y-3 mb-3">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <label className="text-xs font-bold text-slate-800">1. Select Product Colours (Tap or Select All)</label>
-                      <div className="flex gap-1.5">
-                        <button type="button" onClick={() => setForm({ ...form, colors: "Beige, Maroon, Pink, Golden, Slate Blue, Steel Grey, Coffee, Brown, Red, Navy, Cream, Black, White, Purple, Green, Yellow" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All</button>
-                        <button type="button" onClick={() => setForm({ ...form, colors: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {["Beige","Maroon","Pink","Golden","Slate Blue","Steel Grey","Coffee","Brown","Red","Navy","Cream","Black","White","Purple","Green","Yellow"].map(name => {
-                        const list = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
-                        const active = list.some(i => i.toLowerCase() === name.toLowerCase());
-                        return (
-                          <button key={name} type="button" onClick={() => {
-                            const next = active ? list.filter(i => i.toLowerCase() !== name.toLowerCase()) : [...list, name];
-                            setForm({ ...form, colors: next.join(", ") });
-                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
-                            {active ? "✓ " : "+ "}{name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected colours or type new colour separated by comma (e.g. Teal, Rose Gold)" value={form.colors ?? "Beige, Maroon, Pink, Golden"} onChange={e => setForm({...form, colors: e.target.value})} />
 
-                    {/* Color-Wise Multi-Photo Uploader (4-5+ photos per colour) */}
-                    {((form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
-                      <div className="mt-3 border-t border-slate-200 pt-2.5">
-                        <p className="text-[11px] font-bold text-slate-800 mb-2">2. Upload Photos for Each Colour (4-5+ Photos per Colour supported)</p>
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                          {(form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean).map((colName) => {
-                            const colPhotos = (form.colorImages && form.colorImages[colName]) || [];
-                            return (
-                              <div key={colName} className="rounded-lg border border-slate-200 bg-white p-2">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-xs font-bold text-slate-800">{colName} <span className="text-[10px] font-normal text-slate-500">({colPhotos.length} photos)</span></span>
-                                  <label className="cursor-pointer rounded-md bg-amber-50 border border-amber-300 px-2.5 py-1 text-[10px] font-bold text-amber-900 hover:bg-amber-100">
-                                    📷 + Add {colName} Photos
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      multiple
-                                      className="hidden"
-                                      onChange={(e) => {
-                                        const files = Array.from(e.target.files || []);
-                                        if (!files.length) return;
-                                        Promise.all(
-                                          files.map(file => new Promise(resolve => {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => resolve(reader.result);
-                                            reader.readAsDataURL(file);
-                                          }))
-                                        ).then(newImgs => {
-                                          setForm(prev => {
-                                            const existingMap = prev.colorImages || {};
-                                            const prevColImgs = existingMap[colName] || [];
-                                            const updatedColImgs = [...prevColImgs, ...newImgs];
-                                            return {
-                                              ...prev,
-                                              image: prev.image || newImgs[0],
-                                              colorImages: { ...existingMap, [colName]: updatedColImgs }
-                                            };
-                                          });
-                                        });
-                                      }}
-                                    />
-                                  </label>
-                                </div>
-                                {colPhotos.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {colPhotos.map((imgSrc, idx) => (
-                                      <div key={idx} className="relative group h-12 w-12 rounded border overflow-hidden">
-                                        <img src={imgSrc} alt={colName} className="h-full w-full object-cover" />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setForm(prev => {
-                                              const existingMap = prev.colorImages || {};
-                                              const filtered = (existingMap[colName] || []).filter((_, i) => i !== idx);
-                                              return { ...prev, colorImages: { ...existingMap, [colName]: filtered } };
-                                            });
-                                          }}
-                                          className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-1 rounded-bl"
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <label className="text-xs font-bold text-slate-800">3. Available Pack Options (Tap to select)</label>
-                      <div className="flex gap-1.5">
-                        <button type="button" onClick={() => setForm({ ...form, packs: "Pack of 1, Pack of 2, Pack of 3, Pack of 4, Pack of 6, Pack of 10, Pack of 12" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select All Packs</button>
-                        <button type="button" onClick={() => setForm({ ...form, packs: "" })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {["Pack of 1", "Pack of 2", "Pack of 3", "Pack of 4", "Pack of 6", "Pack of 10", "Pack of 12"].map(pName => {
-                        const pList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
-                        const active = pList.some(i => i.toLowerCase() === pName.toLowerCase());
-                        return (
-                          <button key={pName} type="button" onClick={() => {
-                            const next = active ? pList.filter(i => i.toLowerCase() !== pName.toLowerCase()) : [...pList, pName];
-                            setForm({ ...form, packs: next.join(", ") });
-                          }} className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${active ? "border-amber-600 bg-amber-100 text-amber-950 shadow-sm" : "border-slate-200 bg-white text-slate-600"}`}>
-                            {active ? "✓ " : "+ "}{pName}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Selected packs or type custom pack (e.g. Pack of 5, Pack of 20)" value={form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12"} onChange={e => setForm({...form, packs: e.target.value})} />
-                    {((form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean)).length > 0 && (
-                      <div className="mt-3 border-t border-slate-200 pt-2.5">
-                        <p className="text-[11px] font-bold text-slate-800 mb-2">💰 Set Price for Each Pack (Customer selects pack → price auto updates)</p>
-                        <div className="space-y-1.5">
-                          {(form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean).map(pkName => {
-                            const pkObj = (form.packPrices && form.packPrices[pkName]) || {};
-                            return (
-                              <div key={pkName} className="grid grid-cols-3 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
-                                <span className="text-xs font-bold text-slate-800">{pkName}</span>
-                                <input
-                                  type="number"
-                                  placeholder="Sale ₹ (e.g. 499)"
-                                  value={pkObj.sale_price ?? ""}
-                                  onChange={e => {
-                                    const val = e.target.value;
-                                    setForm(prev => {
-                                      const map = prev.packPrices || {};
-                                      const cur = map[pkName] || {};
-                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, sale_price: val } } };
-                                    });
-                                  }}
-                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                                />
-                                <input
-                                  type="number"
-                                  placeholder="MRP ₹ (e.g. 999)"
-                                  value={pkObj.price ?? ""}
-                                  onChange={e => {
-                                    const val = e.target.value;
-                                    setForm(prev => {
-                                      const map = prev.packPrices || {};
-                                      const cur = map[pkName] || {};
-                                      return { ...prev, packPrices: { ...map, [pkName]: { ...cur, price: val } } };
-                                    });
-                                  }}
-                                  className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700">Size / Dimensions</label>
-                    <input className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="16 x 14 x 3 inches (40 x 35 cm)" value={form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"} onChange={e => setForm({...form, dimensions: e.target.value})} />
-                  </div>
-                </div>
-                <label className="text-xs font-semibold text-slate-700">Category</label>
-                <select
-                required
-                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs"
-                value={form.category || "Saree Covers"}
-                onChange={e => setForm({...form, category: e.target.value})}
-              >
-                {[
-                  "Saree Covers",
-                  "Hanging Saree Covers",
-                  "Shoes Covers",
-                  "Clothes Covers",
-                  "Garment Bags",
-                  "Storage Bags",
-                  "Travel Bags",
-                  "Pouches",
-                  "Vehicle Covers",
-                  "Other Products"
-                ].map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            <div className="rounded-xl border border-border bg-slate-50 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">Specifications (Key / Value)</label>
-                <button
-                  type="button"
-                  onClick={() => setForm({
-                    ...form,
-                    specs_list: [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]), { key: "", value: "" }]
-                  })}
-                  className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900 hover:bg-amber-200"
-                >
-                  + Add Key/Value
-                </button>
-              </div>
-              {(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }]).map((sp, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-2 items-center">
-                  <input
-                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
-                    placeholder="Key (e.g. Material)"
-                    value={sp.key}
-                    onChange={e => {
-                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
-                      list[idx] = { ...list[idx], key: e.target.value };
-                      const specsObj = {};
-                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
-                      setForm({ ...form, specs_list: list, specifications: specsObj });
-                    }}
-                  />
-                  <input
-                    className="col-span-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs"
-                    placeholder="Value (e.g. Satin)"
-                    value={sp.value}
-                    onChange={e => {
-                      const list = [...(form.specs_list || [{ key: "Material", value: "Non-Woven / Satin" }, { key: "Closure", value: "Heavy Duty Zipper" }])];
-                      list[idx] = { ...list[idx], value: e.target.value };
-                      const specsObj = {};
-                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
-                      setForm({ ...form, specs_list: list, specifications: specsObj });
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const list = (form.specs_list || []).filter((_, i) => i !== idx);
-                      const specsObj = {};
-                      list.forEach(item => { if (item.key && item.key.trim()) specsObj[item.key.trim()] = item.value || ""; });
-                      setForm({ ...form, specs_list: list, specifications: specsObj });
-                    }}
-                    className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-bold text-rose-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Description</label>
-                <textarea className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-xs" rows="2" placeholder="Product details..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setAdding(false)} className="text-xs">Cancel</Button>
-                <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
       {rows.map((o) => {
         const sh = o.shipment || {};
         const awb = sh.awb_code || sh.tracking_number || "";

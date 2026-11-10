@@ -78,19 +78,25 @@ export default function ProductDetail() {
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Gallery (Color-Aware Multi-Photo Gallery) */}
         {(() => {
+          const allImgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
           let colorImgMap = {};
-          const ciSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "color_images");
-          if (ciSpec && ciSpec.value) {
-            try { colorImgMap = JSON.parse(ciSpec.value); } catch (e) {}
+          const rawCi = Array.isArray(p.specifications)
+            ? (p.specifications.find(s => (s.key || "").toLowerCase() === "color_images")?.value)
+            : (p.specifications?.color_images);
+          if (rawCi) {
+            try { colorImgMap = typeof rawCi === "string" ? JSON.parse(rawCi) : rawCi; } catch (e) {}
           }
           if (p.colorImages && typeof p.colorImages === "object") {
             colorImgMap = { ...colorImgMap, ...p.colorImages };
           }
           const matchedColorKey = Object.keys(colorImgMap).find(k => k.toLowerCase() === (selectedColor || "").toLowerCase());
-          const colorSpecificList = matchedColorKey && Array.isArray(colorImgMap[matchedColorKey]) && colorImgMap[matchedColorKey].length > 0
+          const rawList = matchedColorKey && Array.isArray(colorImgMap[matchedColorKey]) && colorImgMap[matchedColorKey].length > 0
             ? colorImgMap[matchedColorKey]
             : null;
-          const activeGallery = colorSpecificList || (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []));
+          const colorSpecificList = rawList
+            ? rawList.map(item => (typeof item === "number" ? allImgs[item] : item)).filter(Boolean)
+            : null;
+          const activeGallery = (colorSpecificList && colorSpecificList.length > 0) ? colorSpecificList : allImgs;
           const safeIdx = activeImg < activeGallery.length ? activeImg : 0;
           return (
             <div className="flex flex-col-reverse gap-3 sm:flex-row">
@@ -123,11 +129,15 @@ export default function ProductDetail() {
           <div className="mt-4 flex items-end gap-3">
             {(() => {
               let pkMap = {};
-              const ppSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "pack_prices");
-              if (ppSpec && ppSpec.value) {
-                try { pkMap = JSON.parse(ppSpec.value); } catch (e) {}
+              const rawPp = Array.isArray(p.specifications)
+                ? (p.specifications.find(s => (s.key || "").toLowerCase() === "pack_prices")?.value)
+                : (p.specifications?.pack_prices);
+              if (rawPp) {
+                try { pkMap = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
               }
-              const spPacks = (p.specifications || []).find(s => /^(pack|packs|pack size|set|set of)$/i.test((s.key || "").trim()))?.value;
+              const spPacks = Array.isArray(p.specifications)
+                ? (p.specifications.find(s => /^(pack|packs|pack size|set|set of)$/i.test((s.key || "").trim()))?.value)
+                : (p.specifications?.Packs || p.specifications?.packs || "");
               const pkList = spPacks ? spPacks.split(",").map(x => x.trim()).filter(Boolean) : [];
               const curPack = pkList.includes(selectedPack) ? selectedPack : (pkList[0] || "");
               const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
@@ -330,9 +340,11 @@ export default function ProductDetail() {
                           >
                             {(() => {
                               let pkMap = {};
-                              const ppSpec = (p.specifications || []).find(s => (s.key || "").toLowerCase() === "pack_prices");
-                              if (ppSpec && ppSpec.value) {
-                                try { pkMap = JSON.parse(ppSpec.value); } catch (e) {}
+                              const rawPp = Array.isArray(p.specifications)
+                                ? (p.specifications.find(s => (s.key || "").toLowerCase() === "pack_prices")?.value)
+                                : (p.specifications?.pack_prices);
+                              if (rawPp) {
+                                try { pkMap = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
                               }
                               const mk = Object.keys(pkMap).find(k => k.toLowerCase() === pk.toLowerCase());
                               const pSale = mk && pkMap[mk]?.sale_price ? Number(pkMap[mk].sale_price) : null;
