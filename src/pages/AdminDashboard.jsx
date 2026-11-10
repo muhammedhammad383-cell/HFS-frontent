@@ -294,17 +294,19 @@ function Sellers() {
         specsObj["pack_prices"] = JSON.stringify(packPrices);
       }
 
+      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
       await api.post("/admin/products", {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || ""),
-        stock: Number(form.stock ?? 50),
-        price: Number(form.price || 0),
-        sale_price: Number(form.sale_price || form.price || 0),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        sku: String(form.sku || "HFS-001"),
+        stock: Number(form.stock || 50),
+        price: Number(form.price || 499),
+        sale_price: Number(form.sale_price || form.price || 499),
+        image: String(finalMainImage || cleanImgArr[0] || ""),
+        images: cleanImgArr,
+        colors: String(colorList.join(", ") || "Cream"),
+        packs: String(packList.join(", ") || "Pack of 2"),
         dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specsObj,
       });
@@ -399,17 +401,19 @@ function ProductApprovals() {
         specsObj["pack_prices"] = JSON.stringify(packPrices);
       }
 
+      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
       await api.post("/admin/products", {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || ""),
-        stock: Number(form.stock ?? 50),
-        price: Number(form.price || 0),
-        sale_price: Number(form.sale_price || form.price || 0),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        sku: String(form.sku || "HFS-001"),
+        stock: Number(form.stock || 50),
+        price: Number(form.price || 499),
+        sale_price: Number(form.sale_price || form.price || 499),
+        image: String(finalMainImage || cleanImgArr[0] || ""),
+        images: cleanImgArr,
+        colors: String(colorList.join(", ") || "Cream"),
+        packs: String(packList.join(", ") || "Pack of 2"),
         dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specsObj,
       });
@@ -482,7 +486,7 @@ function ProductApprovals() {
                     reader.readAsDataURL(file);
                   }} />
                 </label>
-                <input required className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
+                <input className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
                 {form.image && <img src={form.image} alt="Preview" className="mt-2 h-16 w-16 rounded-lg object-cover border" />}
               </div>
               <div>
@@ -862,17 +866,19 @@ function AdminOrders() {
         specsObj["pack_prices"] = JSON.stringify(packPrices);
       }
 
+      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
       await api.post("/admin/products", {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || ""),
-        stock: Number(form.stock ?? 50),
-        price: Number(form.price || 0),
-        sale_price: Number(form.sale_price || form.price || 0),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : []),
-        colors: colorList,
+        sku: String(form.sku || "HFS-001"),
+        stock: Number(form.stock || 50),
+        price: Number(form.price || 499),
+        sale_price: Number(form.sale_price || form.price || 499),
+        image: String(finalMainImage || cleanImgArr[0] || ""),
+        images: cleanImgArr,
+        colors: String(colorList.join(", ") || "Cream"),
+        packs: String(packList.join(", ") || "Pack of 2"),
         dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
         specifications: specsObj,
       });
