@@ -246,14 +246,13 @@ function Sellers() {
     e.preventDefault();
     setBusy(true);
     try {
-      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const colorList = (form.colors ?? "Cream").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 2").split(",").map(s => s.trim()).filter(Boolean);
       const colorImgs = form.colorImages || {};
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
 
-      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
       const colorIndexMap = {};
       colorList.forEach(c => {
         const arr = colorImgs[c] || [];
@@ -273,48 +272,50 @@ function Sellers() {
       const finalMainImage = String(combinedImages[0] || form.image || "");
       const packPrices = form.packPrices || {};
 
-      // Build specifications as a clean Key-Value Object (exact format required by backend)
-      const specsObj = {};
-      const specList = form.specs_list || [
-        { key: "Material", value: "Non-Woven / Satin" },
+      // Specifications MUST be an array of objects matching FastAPI schema [{key: string, value: string}]
+      const specArray = [];
+      const userSpecs = form.specs_list || [
+        { key: "Material", value: "Quilted Satin" },
         { key: "Closure", value: "Heavy Duty Zipper" }
       ];
-      specList.forEach(item => {
-        if (item && item.key && item.key.trim()) {
-          specsObj[item.key.trim()] = String(item.value || "");
+      userSpecs.forEach(item => {
+        if (item && item.key && String(item.key).trim()) {
+          specArray.push({ key: String(item.key).trim(), value: String(item.value || "") });
         }
       });
-      specsObj["Color"] = colorList.join(", ");
-      specsObj["Packs"] = packList.join(", ");
-      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      specArray.push({ key: "Color", value: colorList.join(", ") });
+      specArray.push({ key: "Packs", value: packList.join(", ") });
+      specArray.push({ key: "Dimensions", value: String(form.dimensions ?? "27L x 18W INCH") });
       if (Object.keys(colorIndexMap).length > 0) {
-        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+        specArray.push({ key: "color_images", value: JSON.stringify(colorIndexMap) });
       }
       if (Object.keys(packPrices).length > 0) {
-        specsObj["pack_prices"] = JSON.stringify(packPrices);
+        specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
-      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
-      await api.post("/admin/products", {
+      const payload = {
         name: String(form.name || "Hanging Saree Cover"),
-        category: String(form.category || "Saree Covers"),
+        category: String(form.category || "Hanging Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || "HFS-001"),
-        stock: Number(form.stock || 50),
-        price: Number(form.price || 499),
+        sku: String(form.sku || "HFS-HSC-01"),
+        stock: Number(form.stock ?? 50),
+        price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: String(finalMainImage || cleanImgArr[0] || ""),
-        images: cleanImgArr,
-        colors: String(colorList.join(", ") || "Cream"),
-        packs: String(packList.join(", ") || "Pack of 2"),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specsObj,
-      });
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "27L x 18W INCH"),
+        specifications: specArray,
+      };
+
+      console.log("SUBMITTING PRODUCT:", payload);
+      await api.post("/admin/products", payload);
       toast.success("Product added successfully!");
       setAdding(false);
-      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });
       if (typeof load === "function") load();
     } catch (err) {
+      console.error("PRODUCT_SAVE_ERROR:", err.response?.data);
       toast.error(apiError(err));
     } finally {
       setBusy(false);
@@ -353,14 +354,13 @@ function ProductApprovals() {
     e.preventDefault();
     setBusy(true);
     try {
-      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const colorList = (form.colors ?? "Cream").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 2").split(",").map(s => s.trim()).filter(Boolean);
       const colorImgs = form.colorImages || {};
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
 
-      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
       const colorIndexMap = {};
       colorList.forEach(c => {
         const arr = colorImgs[c] || [];
@@ -380,48 +380,50 @@ function ProductApprovals() {
       const finalMainImage = String(combinedImages[0] || form.image || "");
       const packPrices = form.packPrices || {};
 
-      // Build specifications as a clean Key-Value Object (exact format required by backend)
-      const specsObj = {};
-      const specList = form.specs_list || [
-        { key: "Material", value: "Non-Woven / Satin" },
+      // Specifications MUST be an array of objects matching FastAPI schema [{key: string, value: string}]
+      const specArray = [];
+      const userSpecs = form.specs_list || [
+        { key: "Material", value: "Quilted Satin" },
         { key: "Closure", value: "Heavy Duty Zipper" }
       ];
-      specList.forEach(item => {
-        if (item && item.key && item.key.trim()) {
-          specsObj[item.key.trim()] = String(item.value || "");
+      userSpecs.forEach(item => {
+        if (item && item.key && String(item.key).trim()) {
+          specArray.push({ key: String(item.key).trim(), value: String(item.value || "") });
         }
       });
-      specsObj["Color"] = colorList.join(", ");
-      specsObj["Packs"] = packList.join(", ");
-      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      specArray.push({ key: "Color", value: colorList.join(", ") });
+      specArray.push({ key: "Packs", value: packList.join(", ") });
+      specArray.push({ key: "Dimensions", value: String(form.dimensions ?? "27L x 18W INCH") });
       if (Object.keys(colorIndexMap).length > 0) {
-        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+        specArray.push({ key: "color_images", value: JSON.stringify(colorIndexMap) });
       }
       if (Object.keys(packPrices).length > 0) {
-        specsObj["pack_prices"] = JSON.stringify(packPrices);
+        specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
-      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
-      await api.post("/admin/products", {
+      const payload = {
         name: String(form.name || "Hanging Saree Cover"),
-        category: String(form.category || "Saree Covers"),
+        category: String(form.category || "Hanging Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || "HFS-001"),
-        stock: Number(form.stock || 50),
-        price: Number(form.price || 499),
+        sku: String(form.sku || "HFS-HSC-01"),
+        stock: Number(form.stock ?? 50),
+        price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: String(finalMainImage || cleanImgArr[0] || ""),
-        images: cleanImgArr,
-        colors: String(colorList.join(", ") || "Cream"),
-        packs: String(packList.join(", ") || "Pack of 2"),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specsObj,
-      });
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "27L x 18W INCH"),
+        specifications: specArray,
+      };
+
+      console.log("SUBMITTING PRODUCT:", payload);
+      await api.post("/admin/products", payload);
       toast.success("Product added successfully!");
       setAdding(false);
-      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });
       if (typeof load === "function") load();
     } catch (err) {
+      console.error("PRODUCT_SAVE_ERROR:", err.response?.data);
       toast.error(apiError(err));
     } finally {
       setBusy(false);
@@ -818,14 +820,13 @@ function AdminOrders() {
     e.preventDefault();
     setBusy(true);
     try {
-      const colorList = (form.colors ?? "Beige, Maroon, Pink, Golden").split(",").map(s => s.trim()).filter(Boolean);
-      const packList = (form.packs ?? "Pack of 1, Pack of 2, Pack of 6, Pack of 12").split(",").map(s => s.trim()).filter(Boolean);
+      const colorList = (form.colors ?? "Cream").split(",").map(s => s.trim()).filter(Boolean);
+      const packList = (form.packs ?? "Pack of 2").split(",").map(s => s.trim()).filter(Boolean);
       const colorImgs = form.colorImages || {};
       const mainImgs = (form.images || []).filter(Boolean);
       const combinedImages = [...mainImgs];
       if (form.image && !combinedImages.includes(form.image)) combinedImages.unshift(form.image);
 
-      // Map each color to image indices in combinedImages so we NEVER duplicate Base64 strings!
       const colorIndexMap = {};
       colorList.forEach(c => {
         const arr = colorImgs[c] || [];
@@ -845,48 +846,50 @@ function AdminOrders() {
       const finalMainImage = String(combinedImages[0] || form.image || "");
       const packPrices = form.packPrices || {};
 
-      // Build specifications as a clean Key-Value Object (exact format required by backend)
-      const specsObj = {};
-      const specList = form.specs_list || [
-        { key: "Material", value: "Non-Woven / Satin" },
+      // Specifications MUST be an array of objects matching FastAPI schema [{key: string, value: string}]
+      const specArray = [];
+      const userSpecs = form.specs_list || [
+        { key: "Material", value: "Quilted Satin" },
         { key: "Closure", value: "Heavy Duty Zipper" }
       ];
-      specList.forEach(item => {
-        if (item && item.key && item.key.trim()) {
-          specsObj[item.key.trim()] = String(item.value || "");
+      userSpecs.forEach(item => {
+        if (item && item.key && String(item.key).trim()) {
+          specArray.push({ key: String(item.key).trim(), value: String(item.value || "") });
         }
       });
-      specsObj["Color"] = colorList.join(", ");
-      specsObj["Packs"] = packList.join(", ");
-      specsObj["Dimensions"] = String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)");
+      specArray.push({ key: "Color", value: colorList.join(", ") });
+      specArray.push({ key: "Packs", value: packList.join(", ") });
+      specArray.push({ key: "Dimensions", value: String(form.dimensions ?? "27L x 18W INCH") });
       if (Object.keys(colorIndexMap).length > 0) {
-        specsObj["color_images"] = JSON.stringify(colorIndexMap);
+        specArray.push({ key: "color_images", value: JSON.stringify(colorIndexMap) });
       }
       if (Object.keys(packPrices).length > 0) {
-        specsObj["pack_prices"] = JSON.stringify(packPrices);
+        specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
-      const cleanImgArr = (combinedImages.length ? combinedImages : (finalMainImage ? [finalMainImage] : [])).filter(Boolean).map(String);
-      await api.post("/admin/products", {
+      const payload = {
         name: String(form.name || "Hanging Saree Cover"),
-        category: String(form.category || "Saree Covers"),
+        category: String(form.category || "Hanging Saree Covers"),
         description: String(form.description || ""),
-        sku: String(form.sku || "HFS-001"),
-        stock: Number(form.stock || 50),
-        price: Number(form.price || 499),
+        sku: String(form.sku || "HFS-HSC-01"),
+        stock: Number(form.stock ?? 50),
+        price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: String(finalMainImage || cleanImgArr[0] || ""),
-        images: cleanImgArr,
-        colors: String(colorList.join(", ") || "Cream"),
-        packs: String(packList.join(", ") || "Pack of 2"),
-        dimensions: String(form.dimensions ?? "16 x 14 x 3 inches (40 x 35 cm)"),
-        specifications: specsObj,
-      });
+        image: finalMainImage,
+        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        colors: colorList.join(", "),
+        dimensions: String(form.dimensions ?? "27L x 18W INCH"),
+        specifications: specArray,
+      };
+
+      console.log("SUBMITTING PRODUCT:", payload);
+      await api.post("/admin/products", payload);
       toast.success("Product added successfully!");
       setAdding(false);
-      setForm({ name: "", price: "", sale_price: "", image: "", category: "Saree Covers", description: "" });
+      setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });
       if (typeof load === "function") load();
     } catch (err) {
+      console.error("PRODUCT_SAVE_ERROR:", err.response?.data);
       toast.error(apiError(err));
     } finally {
       setBusy(false);
