@@ -33,7 +33,7 @@ const compressImageFile = (file, maxW = 650, q = 0.68) =>
     reader.onload = (e) => {
       const dataUrl = e.target?.result || "";
       if (!dataUrl.startsWith("data:image")) return resolve(dataUrl);
-      const img = new Image();
+      const img = document.createElement("img");
       img.onload = () => {
         const canvas = document.createElement("canvas");
         let w = img.width;
@@ -68,7 +68,7 @@ const shrinkDataUrl = (dataUrl, maxW = 650, q = 0.68) =>
     if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:image")) {
       return resolve(dataUrl || "");
     }
-    const img = new Image();
+    const img = document.createElement("img");
     img.onload = () => {
       const canvas = document.createElement("canvas");
       let w = img.width;
