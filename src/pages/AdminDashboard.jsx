@@ -24,6 +24,76 @@ var setAdding = () => {};
 
 const Loader = () => <div className="grid h-40 place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" /></div>;
 
+
+// Auto-compress image File to ~35KB JPEG
+const compressImageFile = (file, maxW = 650, q = 0.68) =>
+  new Promise((resolve) => {
+    if (!file) return resolve("");
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result || "";
+      if (!dataUrl.startsWith("data:image")) return resolve(dataUrl);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW || h > maxW) {
+          if (w > h) {
+            h = Math.round((h * maxW) / w);
+            w = maxW;
+          } else {
+            w = Math.round((w * maxW) / h);
+            h = maxW;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", q));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    };
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+
+// Shrink any existing base64 dataUrl to ~35KB JPEG
+const shrinkDataUrl = (dataUrl, maxW = 650, q = 0.68) =>
+  new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:image")) {
+      return resolve(dataUrl || "");
+    }
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width;
+      let h = img.height;
+      if (w > maxW || h > maxW) {
+        if (w > h) {
+          h = Math.round((h * maxW) / w);
+          w = maxW;
+        } else {
+          w = Math.round((w * maxW) / h);
+          h = maxW;
+        }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", q));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+
 function Stat({ icon: Icon, label, value, accent }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
@@ -491,9 +561,7 @@ function ProductApprovals() {
                   <input type="file" accept="image/*" className="hidden" onChange={e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result }));
-                    reader.readAsDataURL(file);
+                    compressImageFile(file).then(compressed => setForm(prev => ({ ...prev, image: compressed })));
                   }} />
                 </label>
                 <input className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-xs" placeholder="https://... or choose file above" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
