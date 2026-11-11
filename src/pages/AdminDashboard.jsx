@@ -293,6 +293,10 @@ function Sellers() {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
+      const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
+      const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
+      const slimMainImage = String(slimImages[0] || "");
+
       const payload = {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Hanging Saree Covers"),
@@ -301,8 +305,8 @@ function Sellers() {
         stock: Number(form.stock ?? 50),
         price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        image: slimMainImage,
+        images: slimImages,
         colors: colorList.join(", "),
         dimensions: String(form.dimensions ?? "27L x 18W INCH"),
         specifications: specArray,
@@ -401,6 +405,10 @@ function ProductApprovals() {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
+      const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
+      const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
+      const slimMainImage = String(slimImages[0] || "");
+
       const payload = {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Hanging Saree Covers"),
@@ -409,8 +417,8 @@ function ProductApprovals() {
         stock: Number(form.stock ?? 50),
         price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        image: slimMainImage,
+        images: slimImages,
         colors: colorList.join(", "),
         dimensions: String(form.dimensions ?? "27L x 18W INCH"),
         specifications: specArray,
@@ -538,13 +546,7 @@ function ProductApprovals() {
                                       onChange={(e) => {
                                         const files = Array.from(e.target.files || []);
                                         if (!files.length) return;
-                                        Promise.all(
-                                          files.map(file => new Promise(resolve => {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => resolve(reader.result);
-                                            reader.readAsDataURL(file);
-                                          }))
-                                        ).then(newImgs => {
+                                        Promise.all(files.map(file => compressImageFile(file))).then(newImgs => {
                                           setForm(prev => {
                                             const existingMap = prev.colorImages || {};
                                             const prevColImgs = existingMap[colName] || [];
@@ -867,6 +869,10 @@ function AdminOrders() {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
 
+      const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
+      const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
+      const slimMainImage = String(slimImages[0] || "");
+
       const payload = {
         name: String(form.name || "Hanging Saree Cover"),
         category: String(form.category || "Hanging Saree Covers"),
@@ -875,8 +881,8 @@ function AdminOrders() {
         stock: Number(form.stock ?? 50),
         price: Number(form.price || 700),
         sale_price: Number(form.sale_price || form.price || 499),
-        image: finalMainImage,
-        images: combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []),
+        image: slimMainImage,
+        images: slimImages,
         colors: colorList.join(", "),
         dimensions: String(form.dimensions ?? "27L x 18W INCH"),
         specifications: specArray,
