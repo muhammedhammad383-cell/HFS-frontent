@@ -383,7 +383,7 @@ function Sellers() {
       };
 
       console.log("SUBMITTING PRODUCT:", payload);
-      await api.post("/admin/products", payload);
+      if (form.id) { await api.put(`/admin/products/${form.id}`, payload); } else { await api.post("/admin/products", payload); }
       toast.success("Product added successfully!");
       setAdding(false);
       setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });
@@ -495,7 +495,7 @@ function ProductApprovals() {
       };
 
       console.log("SUBMITTING PRODUCT:", payload);
-      await api.post("/admin/products", payload);
+      if (form.id) { await api.put(`/admin/products/${form.id}`, payload); } else { await api.post("/admin/products", payload); }
       toast.success("Product added successfully!");
       setAdding(false);
       setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });
@@ -513,6 +513,44 @@ function ProductApprovals() {
   const decide = async (id, decision) => { await api.put(`/admin/products/${id}/decision`, { decision }); toast.success(`Product ${decision}`); load(); };
   const flag = async (id, key, val) => { await api.put(`/admin/products/${id}/flags`, { [key]: val }); load(); };
   const del = async (id) => { await api.delete(`/admin/products/${id}`); load(); };
+  const startEdit = (p) => {
+    const specs = Array.isArray(p.specifications) ? p.specifications : [];
+    const findSpec = (k) => specs.find(s => s.key?.toLowerCase() === k.toLowerCase())?.value;
+    const colorsStr = Array.isArray(p.colors) && p.colors.length ? p.colors.join(", ") : (findSpec("Available Colors") || "Cream");
+    const packsStr = findSpec("Available Packs") || p.packs || "Pack of 2";
+    let packPricesObj = {};
+    try { const pp = findSpec("pack_prices"); if (pp) packPricesObj = JSON.parse(pp); } catch {}
+    let colorImgsObj = {};
+    try {
+      const ci = findSpec("color_images");
+      if (ci && Array.isArray(p.images)) {
+        const idxMap = JSON.parse(ci);
+        Object.entries(idxMap).forEach(([c, indices]) => {
+          colorImgsObj[c] = (indices || []).map(i => p.images[i]).filter(Boolean);
+        });
+      }
+    } catch {}
+    const customSpecs = specs.filter(s => !["available colors", "available packs", "dimensions", "color_images", "pack_prices"].includes((s.key || "").toLowerCase()));
+    setForm({
+      id: p.id,
+      name: p.name || "",
+      sku: p.sku || "HFS-HSC-01",
+      price: p.price ?? "",
+      sale_price: p.sale_price ?? "",
+      stock: p.stock ?? 50,
+      category: p.category || p.category_name || "Hanging Saree Covers",
+      dimensions: p.dimensions || findSpec("Dimensions") || "27L x 18W INCH",
+      description: p.description || "",
+      image: p.image || p.images?.[0] || "",
+      images: p.images || (p.image ? [p.image] : []),
+      colors: colorsStr,
+      packs: packsStr,
+      packPrices: packPricesObj,
+      colorImages: colorImgsObj,
+      specs_list: customSpecs.length ? customSpecs : [{ key: "Material", value: "Quilted Satin & PVC" }]
+    });
+    setAdding(true);
+  };
   if (!rows) return <Loader />;
   return (
     <div className="space-y-3">
@@ -521,14 +559,14 @@ function ProductApprovals() {
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
           <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
         </div>
-        <Button onClick={() => setAdding(true)} className="bg-brand text-xs text-white hover:bg-brand-dark">
+        <Button onClick={() => { setForm({ name: "", price: "", sale_price: "", image: "", images: [], category: "Hanging Saree Covers", description: "", colors: "Cream", packs: "Pack of 2", dimensions: "27L x 18W INCH", stock: 50, sku: "HFS-HSC-01", colorImages: {}, packPrices: {} }); setAdding(true); }} className="bg-brand text-xs text-white hover:bg-brand-dark">
           + Add New Product
         </Button>
       </div>
       {adding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="font-heading text-lg font-bold text-slate-900">Add New Product</h3>
+            <h3 className="font-heading text-lg font-bold text-slate-900">{form.id ? "Edit Product" : "Add New Product"}</h3>
             <form onSubmit={createProduct} className="mt-4 space-y-3 text-sm">
               <div>
                 <label className="text-xs font-semibold text-slate-700">Product Name</label>
@@ -815,7 +853,7 @@ function ProductApprovals() {
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setAdding(false)} className="text-xs">Cancel</Button>
-                <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Adding..." : "Save Product"}</Button>
+                <Button type="submit" disabled={busy} className="bg-brand text-xs text-white">{busy ? "Saving..." : (form.id ? "Update Product" : "Save Product")}</Button>
               </div>
             </form>
           </div>
@@ -829,10 +867,11 @@ function ProductApprovals() {
       <div className="space-y-2">
         {rows.map((p) => (
           <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3" data-testid={`admin-product-${p.id}`}>
-            <img src={p.images?.[0]} alt="" className="h-12 w-12 rounded-lg object-cover" />
-            <div className="min-w-0 flex-1"><p className="line-clamp-1 font-medium text-slate-900">{p.name}</p><p className="text-xs text-muted-foreground">{p.store_name} · {inr(p.sale_price || p.price)}</p></div>
+            <img src={p.images?.[0] || p.image} alt="" onClick={() => window.open(`/product/${p.slug || p.id}`, "_blank")} className="h-12 w-12 cursor-pointer rounded-lg object-cover hover:opacity-80" title="Click to view product" />
+            <div onClick={() => window.open(`/product/${p.slug || p.id}`, "_blank")} className="min-w-0 flex-1 cursor-pointer hover:underline"><p className="line-clamp-1 font-medium text-slate-900">{p.name}</p><p className="text-xs text-muted-foreground">{p.store_name} · {inr(p.sale_price || p.price)}</p></div>
             <span className={`text-xs font-semibold capitalize ${p.status === "approved" ? "text-green-600" : p.status === "pending" ? "text-amber-600" : "text-rose-600"}`}>{p.status}</span>
             <label className="flex items-center gap-1 text-xs"><Switch checked={!!p.featured} onCheckedChange={(v) => flag(p.id, "featured", v)} /> Featured</label>
+            <Button size="sm" variant="outline" onClick={() => startEdit(p)} className="border-amber-300 bg-amber-50 text-xs font-semibold text-amber-900 hover:bg-amber-100">✏️ Edit</Button>
             {p.status !== "approved" && <Button size="sm" onClick={() => decide(p.id, "approved")} className="bg-trust text-white" data-testid={`admin-product-approve-${p.id}`} aria-label="Admin action"><Check className="h-4 w-4" /></Button>}
             {p.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => decide(p.id, "rejected")} aria-label="Admin action"><X className="h-4 w-4" /></Button>}
             <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-rose-brand" aria-label="Admin action"><Trash2 className="h-4 w-4" /></Button>
@@ -957,7 +996,7 @@ function AdminOrders() {
       };
 
       console.log("SUBMITTING PRODUCT:", payload);
-      await api.post("/admin/products", payload);
+      if (form.id) { await api.put(`/admin/products/${form.id}`, payload); } else { await api.post("/admin/products", payload); }
       toast.success("Product added successfully!");
       setAdding(false);
       setForm({ name: "", price: "", sale_price: "", image: "", category: "Hanging Saree Covers", description: "" });

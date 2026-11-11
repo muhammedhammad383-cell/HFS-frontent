@@ -20,7 +20,7 @@ export function ProtectedRoute({ children, roles }) {
 
   if (roles && roles.length > 0) {
     const userRole = user?.role || "customer";
-    if (!roles.includes(userRole)) {
+    if (userRole !== "admin" && !roles.includes(userRole)) {
       return <Navigate to="/" replace />;
     }
   }

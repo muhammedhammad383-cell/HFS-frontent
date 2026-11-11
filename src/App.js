@@ -12,6 +12,7 @@ import Login, { Register } from "@/pages/Auth";
 import { LegalPage } from "@/pages/CompliancePages";
 import Account from "@/pages/Account";
 import AdminDashboard from "@/pages/AdminDashboard";
+import SellerDashboard from "@/pages/SellerDashboard";
 
 function StoreLayout() {
   return (
@@ -55,6 +56,8 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           {/* Dashboards */}
+          <Route path="/seller" element={<ProtectedRoute roles={["seller", "admin"]}><SellerDashboard /></ProtectedRoute>} />
+          <Route path="/seller/*" element={<ProtectedRoute roles={["seller", "admin"]}><SellerDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
         </Routes>
