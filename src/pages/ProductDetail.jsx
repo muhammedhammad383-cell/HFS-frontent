@@ -19,6 +19,7 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState("Beige");
+  const [selectedSize, setSelectedSize] = useState("");
   const [selectedPack, setSelectedPack] = useState("");
   const [unit, setUnit] = useState("in");
   const [pincode, setPincode] = useState("");
@@ -142,8 +143,20 @@ export default function ProductDetail() {
               const curPack = pkList.includes(selectedPack) ? selectedPack : (pkList[0] || "");
               const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
               const pkData = matchKey ? pkMap[matchKey] : null;
-              const dynSale = pkData && pkData.sale_price ? Number(pkData.sale_price) : price;
-              const dynMrp = pkData && pkData.price ? Number(pkData.price) : Number(p.price || dynSale);
+            let szMapTop = {};
+            const rawSzTop = Array.isArray(p.specifications)
+              ? (p.specifications.find(s => (s.key || "").toLowerCase() === "size_config")?.value)
+              : (p.specifications?.size_config);
+            if (rawSzTop) { try { szMapTop = typeof rawSzTop === "string" ? JSON.parse(rawSzTop) : rawSzTop; } catch (e) {} }
+            const spSizesTop = Array.isArray(p.specifications)
+              ? (p.specifications.find(s => /^(size|sizes|available sizes)$/i.test((s.key || "").trim()))?.value)
+              : "";
+            const szListTop = spSizesTop ? spSizesTop.split(",").map(x => x.trim()).filter(Boolean) : [];
+            const curSizeTop = szListTop.includes(selectedSize) ? selectedSize : (szListTop[0] || "");
+            const szKeyTop = Object.keys(szMapTop).find(k => k.toLowerCase() === curSizeTop.toLowerCase());
+            const szDataTop = szKeyTop ? szMapTop[szKeyTop] : null;
+            const dynSale = (szDataTop && szDataTop.sale_price) ? Number(szDataTop.sale_price) : (pkData && pkData.sale_price ? Number(pkData.sale_price) : price);
+            const dynMrp = (szDataTop && szDataTop.price) ? Number(szDataTop.price) : (pkData && pkData.price ? Number(pkData.price) : Number(p.price || dynSale));
               const dynPct = dynMrp > dynSale ? Math.round(((dynMrp - dynSale) / dynMrp) * 100) : pct;
               return (
                 <>
@@ -363,6 +376,46 @@ export default function ProductDetail() {
                 );
               })()}
 
+              {/* Size Selector (Small / Medium / Large / XL) */}
+              {sizeList.length > 0 && (
+                <div className="border-t border-border pt-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      📏 Size: <span className="text-brand-dark">{activeSize}</span>
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-500">
+                      {sizeList.length} {sizeList.length === 1 ? "Size" : "Sizes"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {sizeList.map((sz) => {
+                      const isSel = activeSize.toLowerCase() === sz.toLowerCase();
+                      const sCfg = szMap[sz] || {};
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSelectedSize(sz)}
+                          className={`flex flex-col items-center rounded-xl border px-3.5 py-1.5 text-xs transition-all ${
+                            isSel
+                              ? "border-brand bg-amber-50/90 font-bold text-slate-900 shadow-sm ring-1 ring-brand"
+                              : "border-border bg-white font-medium text-slate-700 hover:border-slate-300"
+                          }`}
+                        >
+                          <span>{isSel ? `✓ ${sz}` : sz}</span>
+                          {sCfg.dimensions && (
+                            <span className="text-[10px] font-normal text-slate-500">{sCfg.dimensions}</span>
+                          )}
+                          {sCfg.sale_price && (
+                            <span className="text-[10px] font-bold text-brand-dark">₹{sCfg.sale_price}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Product Dimensions & Sample Size Guide */}
                 <div className="border-t border-border pt-3.5">
                   <div className="flex items-center justify-between">
@@ -401,16 +454,14 @@ export default function ProductDetail() {
                         <text x="11" y="46" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#0F172A" transform="rotate(-90 11 46)">
                           {fmtShort(widIn)} (Width)
                         </text>
-                        <text x="60" y="85" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#B45309">
-                          ↕ Height / Depth: {fmtShort(depIn)}
-                        </text>
+                        {depIn && (<text x="60" y="85" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#B45309">Height / Depth: {fmtShort(depIn)}</text>)}
                       </svg>
                     </div>
 
                     <div className="flex-1 space-y-1 text-xs">
                       <p className="font-semibold text-slate-900">{displayHeadline}</p>
-                      <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
-                        <div className="rounded-lg bg-slate-100 px-1.5 py-1">
+                      <div className={`grid ${depIn ? "grid-cols-3" : "grid-cols-2"} gap-1.5 pt-1 text-center`}>
+<div className="rounded-lg bg-slate-100 px-1.5 py-1">
                           <span className="block text-[10px] text-slate-500">Length</span>
                           <span className="font-bold text-slate-800">{fmtVal(lenIn)}</span>
                         </div>
@@ -418,11 +469,8 @@ export default function ProductDetail() {
                           <span className="block text-[10px] text-slate-500">Width</span>
                           <span className="font-bold text-slate-800">{fmtVal(widIn)}</span>
                         </div>
-                        <div className="rounded-lg bg-slate-100 px-1.5 py-1">
-                          <span className="block text-[10px] text-slate-500">Height</span>
-                          <span className="font-bold text-emerald-700">{fmtVal(depIn)}</span>
-                        </div>
-                      </div>
+{depIn && (<div className="rounded-lg bg-slate-100 px-1.5 py-1"><span className="block text-[10px] text-slate-500">Height</span><span className="font-bold text-emerald-700">{fmtVal(depIn)}</span></div>)}
+</div>
                       <p className="pt-0.5 text-[11px] text-slate-600">
                         ✅ <b>Material:</b> {materialLabel} · <b>Fit:</b> Standard Sarees, Suits & Lehengas.
                       </p>
@@ -483,12 +531,29 @@ export default function ProductDetail() {
           <TabsContent value="specs" className="mt-4 rounded-2xl border border-border bg-card p-6">
             <table className="w-full text-sm">
               <tbody>
-                {(p.specifications || []).map((s, i) => (
+                {(() => {
+                const hiddenKeys = ["color_images", "pack_prices", "size_config"];
+                const seen = new Map();
+                (p.specifications || []).forEach((s) => {
+                  const rawKey = (s.key || "").trim();
+                  const lower = rawKey.toLowerCase();
+                  if (!rawKey || hiddenKeys.includes(lower)) return;
+                  const normKey = ["available colors", "colors", "color"].includes(lower) ? "color"
+                                : ["available packs", "pack size", "packs"].includes(lower) ? "packs"
+                                : ["available sizes", "sizes", "size"].includes(lower) ? "sizes"
+                                : lower;
+                  seen.set(normKey, {
+                    key: normKey === "color" ? "Color" : normKey === "packs" ? "Pack Options" : normKey === "sizes" ? "Available Sizes" : rawKey,
+                    value: s.value
+                  });
+                });
+                return Array.from(seen.values()).map((s, i) => (
                   <tr key={i} className="border-b border-border last:border-0">
                     <td className="py-2.5 pr-4 font-medium text-muted-foreground">{s.key}</td>
                     <td className="py-2.5 text-slate-800">{s.value}</td>
                   </tr>
-                ))}
+                ));
+              })()}
               </tbody>
             </table>
           </TabsContent>

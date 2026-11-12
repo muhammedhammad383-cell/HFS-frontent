@@ -362,6 +362,13 @@ function Sellers() {
       if (Object.keys(packPrices).length > 0) {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
+      const sizeList = (form.sizes || "").split(",").map(s => s.trim()).filter(Boolean);
+      if (sizeList.length > 0) {
+        specArray.push({ key: "Available Sizes", value: sizeList.join(", ") });
+      }
+      if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
+        specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
+      }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
       const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
@@ -474,6 +481,13 @@ function ProductApprovals() {
       if (Object.keys(packPrices).length > 0) {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
       }
+      const sizeList = (form.sizes || "").split(",").map(s => s.trim()).filter(Boolean);
+      if (sizeList.length > 0) {
+        specArray.push({ key: "Available Sizes", value: sizeList.join(", ") });
+      }
+      if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
+        specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
+      }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
       const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
@@ -517,7 +531,10 @@ function ProductApprovals() {
     const specs = Array.isArray(p.specifications) ? p.specifications : [];
     const findSpec = (k) => specs.find(s => s.key?.toLowerCase() === k.toLowerCase())?.value;
     const colorsStr = Array.isArray(p.colors) && p.colors.length ? p.colors.join(", ") : (findSpec("Available Colors") || "Cream");
-    const packsStr = findSpec("Available Packs") || p.packs || "Pack of 2";
+    const packsStr = findSpec("Available Packs") || findSpec("Packs") || p.packs || "Pack of 2";
+    const sizesStr = findSpec("Available Sizes") || findSpec("Sizes") || "";
+    let sizeCfgObj = {};
+    try { const sc = findSpec("size_config"); if (sc) sizeCfgObj = JSON.parse(sc); } catch {}
     let packPricesObj = {};
     try { const pp = findSpec("pack_prices"); if (pp) packPricesObj = JSON.parse(pp); } catch {}
     let colorImgsObj = {};
@@ -530,7 +547,7 @@ function ProductApprovals() {
         });
       }
     } catch {}
-    const customSpecs = specs.filter(s => !["color", "colors", "available colors", "packs", "pack size", "available packs", "dimensions", "color_images", "pack_prices"].includes((s.key || "").toLowerCase().trim()));
+    const customSpecs = specs.filter(s => !["color", "colors", "available colors", "packs", "pack size", "available packs", "dimensions", "color_images", "pack_prices", "available sizes", "sizes", "size", "size_config"].includes((s.key || "").toLowerCase().trim()));
     setForm({
       id: p.id,
       name: p.name || "",
@@ -546,6 +563,8 @@ function ProductApprovals() {
       colors: colorsStr,
       packs: packsStr,
       packPrices: packPricesObj,
+      sizes: sizesStr,
+      sizeConfig: sizeCfgObj,
       colorImages: colorImgsObj,
       specs_list: customSpecs.length ? customSpecs : [{ key: "Material", value: "Quilted Satin & PVC" }]
     });
@@ -974,6 +993,13 @@ function AdminOrders() {
       }
       if (Object.keys(packPrices).length > 0) {
         specArray.push({ key: "pack_prices", value: JSON.stringify(packPrices) });
+      }
+      const sizeList = (form.sizes || "").split(",").map(s => s.trim()).filter(Boolean);
+      if (sizeList.length > 0) {
+        specArray.push({ key: "Available Sizes", value: sizeList.join(", ") });
+      }
+      if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
+        specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
       }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
