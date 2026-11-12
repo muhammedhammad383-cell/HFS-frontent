@@ -578,7 +578,7 @@ function ProductApprovals() {
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
           <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
         </div>
-        <Button onClick={() => { setForm({ name: "", price: "", sale_price: "", image: "", images: [], category: "Hanging Saree Covers", description: "", colors: "Cream", packs: "Pack of 2", dimensions: "27L x 18W INCH", stock: 50, sku: "HFS-HSC-01", colorImages: {}, packPrices: {} }); setAdding(true); }} className="bg-brand text-xs text-white hover:bg-brand-dark">
+        <Button onClick={() => { setForm({ name: "", price: "", sale_price: "", image: "", images: [], category: "Hanging Saree Covers", description: "", colors: "Cream", packs: "Pack of 2", dimensions: "27L x 18W INCH", stock: 50, sku: "HFS-HSC-01", colorImages: {}, packPrices: {}, sizes: "", sizeConfig: {} }); setAdding(true); }} className="bg-brand text-xs text-white hover:bg-brand-dark">
           + Add New Product
         </Button>
       </div>
@@ -784,14 +784,17 @@ function ProductApprovals() {
                     )}
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <label className="text-xs font-bold text-slate-800">4. Available Sizes (Small / Medium / Large - For Shoes Covers)</label>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <div>
+              <label className="text-xs font-bold text-slate-800">4. Available Sizes & Size-wise Pack Prices <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-normal text-slate-700">Optional</span></label>
+              <p className="text-[10px] text-slate-500">Leave empty for single-size products (like Saree Covers). Select sizes only if product comes in Small / Medium / Large.</p>
+            </div>
             <div className="flex gap-1.5">
               <button type="button" onClick={() => setForm({ ...form, sizes: "Small, Medium, Large" })} className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">✓ Select S / M / L</button>
-              <button type="button" onClick={() => setForm({ ...form, sizes: "", sizeConfig: {} })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear</button>
+              <button type="button" onClick={() => setForm({ ...form, sizes: "", sizeConfig: {} })} className="rounded border px-2 py-1 text-[10px] text-slate-600 bg-white">Clear (No Sizes)</button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5 mb-2">
+          <div className="flex flex-wrap gap-1.5 my-2">
             {["Small", "Medium", "Large", "XL", "Free Size"].map(sName => {
               const sList = (form.sizes || "").split(",").map(s => s.trim()).filter(Boolean);
               const active = sList.some(i => i.toLowerCase() === sName.toLowerCase());
@@ -805,62 +808,136 @@ function ProductApprovals() {
               );
             })}
           </div>
-          <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Click buttons above or type sizes (e.g. Small, Medium, Large)" value={form.sizes ?? ""} onChange={e => setForm({ ...form, sizes: e.target.value })} />
+          <input className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs" placeholder="Optional — Leave blank for normal products, or select/type sizes (e.g. Small, Medium, Large)" value={form.sizes ?? ""} onChange={e => setForm({ ...form, sizes: e.target.value })} />
           {(form.sizes || "").split(",").map(s => s.trim()).filter(Boolean).length > 0 && (
-            <div className="mt-3 border-t border-slate-200 pt-2.5">
-              <p className="text-[11px] font-bold text-slate-800 mb-2">📏 Set Size Dimensions & Price for Each Size (Optional)</p>
-              <div className="space-y-1.5">
-                {(form.sizes || "").split(",").map(s => s.trim()).filter(Boolean).map(szName => {
-                  const szObj = (form.sizeConfig && form.sizeConfig[szName]) || {};
-                  return (
-                    <div key={szName} className="grid grid-cols-4 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
-                      <span className="text-xs font-bold text-slate-800">{szName}</span>
-                      <input
-                        type="text"
-                        placeholder="Dim (e.g. 13x9x6 in)"
-                        value={szObj.dimensions ?? ""}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setForm(prev => {
-                            const map = prev.sizeConfig || {};
-                            const cur = map[szName] || {};
-                            return { ...prev, sizeConfig: { ...map, [szName]: { ...cur, dimensions: val } } };
-                          });
-                        }}
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Sale ₹"
-                        value={szObj.sale_price ?? ""}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setForm(prev => {
-                            const map = prev.sizeConfig || {};
-                            const cur = map[szName] || {};
-                            return { ...prev, sizeConfig: { ...map, [szName]: { ...cur, sale_price: val } } };
-                          });
-                        }}
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        type="number"
-                        placeholder="MRP ₹"
-                        value={szObj.price ?? ""}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setForm(prev => {
-                            const map = prev.sizeConfig || {};
-                            const cur = map[szName] || {};
-                            return { ...prev, sizeConfig: { ...map, [szName]: { ...cur, price: val } } };
-                          });
-                        }}
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
+            <div className="mt-3 space-y-3 border-t border-slate-200 pt-3">
+              <p className="text-[11px] font-bold text-slate-800">📏 Set Dimensions, Packs & Pack Prices for Each Selected Size:</p>
+              {(form.sizes || "").split(",").map(s => s.trim()).filter(Boolean).map(szName => {
+                const szObj = (form.sizeConfig && form.sizeConfig[szName]) || {};
+                const defaultPacks = (form.packs ?? "Pack of 2").split(",").map(s => s.trim()).filter(Boolean);
+                const szPacksStr = szObj.packs !== undefined ? szObj.packs : (form.packs ?? "Pack of 2");
+                const szPackList = szPacksStr.split(",").map(s => s.trim()).filter(Boolean);
+                const szPackPrices = szObj.pack_prices || {};
+
+                return (
+                  <div key={szName} className="rounded-xl border border-amber-300 bg-white p-2.5 shadow-sm space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-950">📏 Size: {szName}</span>
+                      <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+                        <span className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">Dimensions:</span>
+                        <input
+                          type="text"
+                          placeholder="e.g. 13L x 7W x 5.5H INCH"
+                          value={szObj.dimensions ?? ""}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setForm(prev => {
+                              const map = prev.sizeConfig || {};
+                              const cur = map[szName] || {};
+                              return { ...prev, sizeConfig: { ...map, [szName]: { ...cur, dimensions: val } } };
+                            });
+                          }}
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                        />
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-600 mb-1">Packs for {szName} (Tap to toggle):</span>
+                      <div className="flex flex-wrap gap-1">
+                        {["Pack of 1", "Pack of 2", "Pack of 3", "Pack of 4", "Pack of 6", "Pack of 10", "Pack of 12"].map(pName => {
+                          const isPackActive = szPackList.some(i => i.toLowerCase() === pName.toLowerCase());
+                          return (
+                            <button
+                              key={pName}
+                              type="button"
+                              onClick={() => {
+                                const nextPacks = isPackActive
+                                  ? szPackList.filter(i => i.toLowerCase() !== pName.toLowerCase())
+                                  : [...szPackList, pName];
+                                setForm(prev => {
+                                  const map = prev.sizeConfig || {};
+                                  const cur = map[szName] || {};
+                                  return { ...prev, sizeConfig: { ...map, [szName]: { ...cur, packs: nextPacks.join(", ") } } };
+                                });
+                              }}
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                isPackActive ? "border-amber-600 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-500"
+                              }`}
+                            >
+                              {isPackActive ? "✓ " : "+ "}{pName}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                      <span className="block text-[10px] font-bold text-slate-700">💰 {szName} - Price per Pack:</span>
+                      {(szPackList.length ? szPackList : defaultPacks).map((pkName, pIdx) => {
+                        const pkEntry = szPackPrices[pkName] || {};
+                        const fallbackSale = (pIdx === 0 && szObj.sale_price) ? szObj.sale_price : (form.packPrices?.[pkName]?.sale_price ?? "");
+                        const fallbackMrp = (pIdx === 0 && szObj.price) ? szObj.price : (form.packPrices?.[pkName]?.price ?? "");
+                        return (
+                          <div key={pkName} className="grid grid-cols-3 items-center gap-2 rounded-lg bg-slate-50 px-2 py-1 border border-slate-200">
+                            <span className="text-[11px] font-semibold text-slate-800">{pkName}</span>
+                            <input
+                              type="number"
+                              placeholder={`Sale ₹ (${fallbackSale || "249"})`}
+                              value={pkEntry.sale_price ?? ((pIdx === 0 && szObj.sale_price) ? szObj.sale_price : "")}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setForm(prev => {
+                                  const map = prev.sizeConfig || {};
+                                  const cur = map[szName] || {};
+                                  const curPp = cur.pack_prices || {};
+                                  const curPk = curPp[pkName] || {};
+                                  return {
+                                    ...prev,
+                                    sizeConfig: {
+                                      ...map,
+                                      [szName]: {
+                                        ...cur,
+                                        pack_prices: { ...curPp, [pkName]: { ...curPk, sale_price: val } }
+                                      }
+                                    }
+                                  };
+                                });
+                              }}
+                              className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                            />
+                            <input
+                              type="number"
+                              placeholder={`MRP ₹ (${fallbackMrp || "499"})`}
+                              value={pkEntry.price ?? ((pIdx === 0 && szObj.price) ? szObj.price : "")}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setForm(prev => {
+                                  const map = prev.sizeConfig || {};
+                                  const cur = map[szName] || {};
+                                  const curPp = cur.pack_prices || {};
+                                  const curPk = curPp[pkName] || {};
+                                  return {
+                                    ...prev,
+                                    sizeConfig: {
+                                      ...map,
+                                      [szName]: {
+                                        ...cur,
+                                        pack_prices: { ...curPp, [pkName]: { ...curPk, price: val } }
+                                      }
+                                    }
+                                  };
+                                });
+                              }}
+                              className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

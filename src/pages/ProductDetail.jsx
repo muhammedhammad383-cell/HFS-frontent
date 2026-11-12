@@ -130,24 +130,19 @@ export default function ProductDetail() {
           <div className="mt-4 flex items-end gap-3">
             {(() => {
               let pkMap = {};
-              const rawPp = Array.isArray(p.specifications)
-                ? (p.specifications.find(s => (s.key || "").toLowerCase() === "pack_prices")?.value)
-                : (p.specifications?.pack_prices);
-              if (rawPp) {
-                try { pkMap = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
-              }
-              const spPacks = Array.isArray(p.specifications)
-                ? (p.specifications.find(s => /^(pack|packs|pack size|set|set of)$/i.test((s.key || "").trim()))?.value)
-                : (p.specifications?.Packs || p.specifications?.packs || "");
-              const pkList = spPacks ? spPacks.split(",").map(x => x.trim()).filter(Boolean) : [];
-              const curPack = pkList.includes(selectedPack) ? selectedPack : (pkList[0] || "");
-              const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
-              const pkData = matchKey ? pkMap[matchKey] : null;
+            const rawPp = Array.isArray(p.specifications)
+              ? (p.specifications.find(s => (s.key || "").toLowerCase() === "pack_prices")?.value)
+              : (p.specifications?.pack_prices);
+            if (rawPp) {
+              try { pkMap = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
+            }
             let szMapTop = {};
             const rawSzTop = Array.isArray(p.specifications)
               ? (p.specifications.find(s => (s.key || "").toLowerCase() === "size_config")?.value)
               : (p.specifications?.size_config);
-            if (rawSzTop) { try { szMapTop = typeof rawSzTop === "string" ? JSON.parse(rawSzTop) : rawSzTop; } catch (e) {} }
+            if (rawSzTop) {
+              try { szMapTop = typeof rawSzTop === "string" ? JSON.parse(rawSzTop) : rawSzTop; } catch (e) {}
+            }
             const spSizesTop = Array.isArray(p.specifications)
               ? (p.specifications.find(s => /^(size|sizes|available sizes)$/i.test((s.key || "").trim()))?.value)
               : "";
@@ -155,9 +150,44 @@ export default function ProductDetail() {
             const curSizeTop = szListTop.includes(selectedSize) ? selectedSize : (szListTop[0] || "");
             const szKeyTop = Object.keys(szMapTop).find(k => k.toLowerCase() === curSizeTop.toLowerCase());
             const szDataTop = szKeyTop ? szMapTop[szKeyTop] : null;
-            const dynSale = (szDataTop && szDataTop.sale_price) ? Number(szDataTop.sale_price) : (pkData && pkData.sale_price ? Number(pkData.sale_price) : price);
-            const dynMrp = (szDataTop && szDataTop.price) ? Number(szDataTop.price) : (pkData && pkData.price ? Number(pkData.price) : Number(p.price || dynSale));
-              const dynPct = dynMrp > dynSale ? Math.round(((dynMrp - dynSale) / dynMrp) * 100) : pct;
+
+            const defaultPacksStr = Array.isArray(p.specifications)
+              ? (p.specifications.find(s => /^(pack|packs|pack size|available packs|set|set of)$/i.test((s.key || "").trim()))?.value)
+              : (p.specifications?.Packs || p.specifications?.packs || "");
+            const effPacksStr = (szDataTop && szDataTop.packs) ? szDataTop.packs : defaultPacksStr;
+            const pkList = effPacksStr ? effPacksStr.split(",").map(x => x.trim()).filter(Boolean) : [];
+            const curPack = pkList.includes(selectedPack) ? selectedPack : (pkList[0] || "");
+
+            const szPkMapTop = (szDataTop && szDataTop.pack_prices) || {};
+            const szPkKey = Object.keys(szPkMapTop).find(k => k.toLowerCase() === curPack.toLowerCase());
+            const szPkData = szPkKey ? szPkMapTop[szPkKey] : null;
+
+            const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
+            const pkData = matchKey ? pkMap[matchKey] : null;
+
+            const isFirstPack = pkList.length === 0 || curPack.toLowerCase() === (pkList[0] || "").toLowerCase();
+
+            const dynSale = (szPkData && szPkData.sale_price)
+              ? Number(szPkData.sale_price)
+              : (isFirstPack && szDataTop && szDataTop.sale_price)
+              ? Number(szDataTop.sale_price)
+              : (pkData && pkData.sale_price)
+              ? Number(pkData.sale_price)
+              : (szDataTop && szDataTop.sale_price)
+              ? Number(szDataTop.sale_price)
+              : price;
+
+            const dynMrp = (szPkData && szPkData.price)
+              ? Number(szPkData.price)
+              : (isFirstPack && szDataTop && szDataTop.price)
+              ? Number(szDataTop.price)
+              : (pkData && pkData.price)
+              ? Number(pkData.price)
+              : (szDataTop && szDataTop.price)
+              ? Number(szDataTop.price)
+              : Number(p.price || dynSale);
+
+            const dynPct = dynMrp > dynSale ? Math.round(((dynMrp - dynSale) / dynMrp) * 100) : pct;
               return (
                 <>
                   <span className="font-heading text-3xl font-black text-slate-900">{inr(dynSale)}</span>
@@ -337,78 +367,12 @@ export default function ProductDetail() {
                     })}
                   </div>
                 </div>
-
-                {/* Pack Options Selector (Pack of 2, 6, 12, etc.) */}
-              {(() => {
-                const specPacks = getSpec(/^(pack|packs|pack size|set|set of)$/i);
-                let packList = [];
-                if (Array.isArray(p.packs) && p.packs.length > 0) {
-                  packList = p.packs.map(x => x.trim()).filter(Boolean);
-                } else if (typeof p.packs === "string" && p.packs.trim()) {
-                  packList = p.packs.split(",").map(x => x.trim()).filter(Boolean);
-                } else if (specPacks) {
-                  packList = specPacks.split(",").map(x => x.trim()).filter(Boolean);
-                } else {
-                  const titlePack = (p.name || "").match(/\b(Pack of \d+|Set of \d+|\d+\s*Pcs)\b/i);
-                  if (titlePack) packList = [titlePack[1]];
-                }
-                if (!packList.length) return null;
-                const activePack = packList.includes(selectedPack) ? selectedPack : packList[0];
-                return (
-                  <div className="border-t border-border pt-3.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        📦 Pack Size: <span className="text-brand-dark">{activePack}</span>
-                      </span>
-                      <span className="text-[11px] font-medium text-emerald-700">
-                        {packList.length} {packList.length === 1 ? "Option" : "Options"}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {packList.map((pk) => {
-                        const isPkSel = activePack.toLowerCase() === pk.toLowerCase();
-                        return (
-                          <button
-                            key={pk}
-                            type="button"
-                            onClick={() => setSelectedPack(pk)}
-                            className={`rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
-                              isPkSel
-                                ? "border-brand bg-amber-50/90 text-slate-900 shadow-sm ring-1 ring-brand"
-                                : "border-border bg-white text-slate-700 hover:border-slate-300"
-                            }`}
-                          >
-                            {(() => {
-                              let pkMap = {};
-                              const rawPp = Array.isArray(p.specifications)
-                                ? (p.specifications.find(s => (s.key || "").toLowerCase() === "pack_prices")?.value)
-                                : (p.specifications?.pack_prices);
-                              if (rawPp) {
-                                try { pkMap = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
-                              }
-                              const mk = Object.keys(pkMap).find(k => k.toLowerCase() === pk.toLowerCase());
-                              const pSale = mk && pkMap[mk]?.sale_price ? Number(pkMap[mk].sale_price) : null;
-                              return (
-                                <div className="flex flex-col items-center leading-tight">
-                                  <span>{isPkSel ? "✓ " : ""}{pk}</span>
-                                  {pSale && <span className="mt-0.5 text-[10px] font-extrabold text-amber-800">{inr(pSale)}</span>}
-                                </div>
-                              );
-                            })()}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Size Selector (Small / Medium / Large / XL) */}
+              {/* 1. Size Selector (Only shown if product has Sizes configured) */}
               {sizeList.length > 0 && (
                 <div className="border-t border-border pt-3.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      📏 Size: <span className="text-brand-dark">{activeSize}</span>
+                      📏 Select Size: <span className="text-brand-dark">{activeSize}</span>
                     </span>
                     <span className="text-[11px] font-medium text-slate-500">
                       {sizeList.length} {sizeList.length === 1 ? "Size" : "Sizes"}
@@ -417,12 +381,21 @@ export default function ProductDetail() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {sizeList.map((sz) => {
                       const isSel = activeSize.toLowerCase() === sz.toLowerCase();
-                      const sCfg = szMap[sz] || {};
+                      const sKey = Object.keys(szMap).find(k => k.toLowerCase() === sz.toLowerCase());
+                      const sCfg = sKey ? (szMap[sKey] || {}) : {};
                       return (
                         <button
                           key={sz}
                           type="button"
-                          onClick={() => setSelectedSize(sz)}
+                          onClick={() => {
+                            setSelectedSize(sz);
+                            if (sCfg.packs) {
+                              const nextPacks = sCfg.packs.split(",").map(x => x.trim()).filter(Boolean);
+                              if (nextPacks.length > 0 && !nextPacks.includes(selectedPack)) {
+                                setSelectedPack(nextPacks[0]);
+                              }
+                            }
+                          }}
                           className={`flex flex-col items-center rounded-xl border px-3.5 py-1.5 text-xs transition-all ${
                             isSel
                               ? "border-brand bg-amber-50/90 font-bold text-slate-900 shadow-sm ring-1 ring-brand"
@@ -433,15 +406,81 @@ export default function ProductDetail() {
                           {sCfg.dimensions && (
                             <span className="text-[10px] font-normal text-slate-500">{sCfg.dimensions}</span>
                           )}
-                          {sCfg.sale_price && (
-                            <span className="text-[10px] font-bold text-brand-dark">₹{sCfg.sale_price}</span>
-                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
               )}
+
+              {/* 2. Pack Size Selector (Dynamic per selected Size or Default) */}
+              {(() => {
+                const defaultPacksRaw = getSpec(/^(pack|packs|pack size|available packs|set|set of)$/i) || p.packs || "";
+                const activePacksRaw = (activeSizeCfg && activeSizeCfg.packs) ? activeSizeCfg.packs : defaultPacksRaw;
+                const packList = activePacksRaw ? activePacksRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
+                if (packList.length === 0) return null;
+
+                let basePackPrices = {};
+                const rawPp = getSpec(/^pack_prices$/i);
+                if (rawPp) {
+                  try { basePackPrices = typeof rawPp === "string" ? JSON.parse(rawPp) : rawPp; } catch (e) {}
+                }
+                const sizePackPrices = (activeSizeCfg && activeSizeCfg.pack_prices) || {};
+                const currentPack = packList.includes(selectedPack) ? selectedPack : packList[0];
+
+                const getPriceForPack = (pkName, idx) => {
+                  const sKey = Object.keys(sizePackPrices).find(k => k.toLowerCase() === pkName.toLowerCase());
+                  if (sKey && sizePackPrices[sKey]?.sale_price) {
+                    return Number(sizePackPrices[sKey].sale_price);
+                  }
+                  if (idx === 0 && activeSizeCfg && activeSizeCfg.sale_price) {
+                    return Number(activeSizeCfg.sale_price);
+                  }
+                  const bKey = Object.keys(basePackPrices).find(k => k.toLowerCase() === pkName.toLowerCase());
+                  if (bKey && basePackPrices[bKey]?.sale_price) {
+                    return Number(basePackPrices[bKey].sale_price);
+                  }
+                  if (activeSizeCfg && activeSizeCfg.sale_price) {
+                    return Number(activeSizeCfg.sale_price);
+                  }
+                  return price;
+                };
+
+                return (
+                  <div className="border-t border-border pt-3.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        📦 Pack Size: <span className="text-brand-dark">{currentPack}</span>
+                        {activeSize ? <span className="ml-1 text-[10px] font-semibold text-slate-500">({activeSize})</span> : null}
+                      </span>
+                      <span className="text-[11px] font-medium text-emerald-700">
+                        {packList.length} {packList.length === 1 ? "Option" : "Options"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {packList.map((pk, idx) => {
+                        const isSel = currentPack.toLowerCase() === pk.toLowerCase();
+                        const pkSale = getPriceForPack(pk, idx);
+                        return (
+                          <button
+                            key={pk}
+                            type="button"
+                            onClick={() => setSelectedPack(pk)}
+                            className={`flex flex-col items-center rounded-xl border px-3.5 py-1.5 text-xs transition-all ${
+                              isSel
+                                ? "border-brand bg-amber-50/90 font-bold text-slate-900 shadow-sm ring-1 ring-brand"
+                                : "border-border bg-white font-medium text-slate-700 hover:border-slate-300"
+                            }`}
+                          >
+                            <span>{isSel ? `✓ ${pk}` : pk}</span>
+                            <span className="text-[10px] font-bold text-brand-dark">{inr(pkSale)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Product Dimensions & Sample Size Guide */}
                 <div className="border-t border-border pt-3.5">
