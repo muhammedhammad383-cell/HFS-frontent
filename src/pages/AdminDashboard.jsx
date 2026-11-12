@@ -530,7 +530,7 @@ function ProductApprovals() {
         });
       }
     } catch {}
-    const customSpecs = specs.filter(s => !["available colors", "available packs", "dimensions", "color_images", "pack_prices"].includes((s.key || "").toLowerCase()));
+    const customSpecs = specs.filter(s => !["color", "colors", "available colors", "packs", "pack size", "available packs", "dimensions", "color_images", "pack_prices"].includes((s.key || "").toLowerCase().trim()));
     setForm({
       id: p.id,
       name: p.name || "",
