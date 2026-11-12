@@ -255,6 +255,21 @@ export default function ProductDetail() {
             : `${lenIn} x ${widIn} Inches (${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} cm)`);
 
       const materialLabel = specMat || ((p.name || "").includes("120 GSM") ? "120 GSM" : "Premium");
+      const specFit = getSpec(/^(ideal for|fit|suitable for|usage)$/i);
+      const catAndTitle = `${p.name || ""} ${p.category || ""} ${p.category_name || ""}`.toLowerCase();
+      const fitLabel = specFit || (
+        /shoe|footwear|sneaker|slipper|sandal|boot/.test(catAndTitle)
+          ? "Sneakers, Heels, Formal Shoes & Daily Footwear"
+          : /jewel|bangle|cosmetic|makeup|accessory/.test(catAndTitle)
+          ? "Jewellery, Bangles, Cosmetics & Accessories"
+          : /vehicle|car|bike|scooty|scooter/.test(catAndTitle)
+          ? "Two-Wheelers, Scooters & Vehicles"
+          : /shirt|trouser|pant|coat|blazer|garment/.test(catAndTitle) && !/saree/.test(catAndTitle)
+          ? "Shirts, Suits, Coats & Wardrobe Clothes"
+          : /blanket|quilt|duvet|bedsheet|pillow/.test(catAndTitle)
+          ? "Blankets, Quilts, Comforters & Bedding"
+          : "Standard Sarees, Suits & Lehengas"
+      );
 
             const getColorHex = (colName) => {
               if (colorMap[colName]) return colorMap[colName];
@@ -484,7 +499,7 @@ export default function ProductDetail() {
 {depIn && (<div className="rounded-lg bg-slate-100 px-1.5 py-1"><span className="block text-[10px] text-slate-500">Height</span><span className="font-bold text-emerald-700">{fmtVal(depIn)}</span></div>)}
 </div>
                       <p className="pt-0.5 text-[11px] text-slate-600">
-                        ✅ <b>Material:</b> {materialLabel} · <b>Fit:</b> Standard Sarees, Suits & Lehengas.
+                        ✅ <b>Material:</b> {materialLabel} · <b>Fit:</b> {fitLabel}.
                       </p>
                     </div>
                   </div>
