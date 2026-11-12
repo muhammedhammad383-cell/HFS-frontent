@@ -225,24 +225,36 @@ export default function ProductDetail() {
             const displayColors = Array.from(new Set(inStockColors));
             const activeColor = inStockColors.includes(selectedColor) ? selectedColor : inStockColors[0];
 
-            // 2. Determine Exact Dimensions from Specifications, Product field, or Product Title
-            const titleDimMatch = (p.name || "").match(/(\d+\s*[xX*]\s*\d+(?:\s*[xX*]\s*\d+)?\s*(?:Inch|Inches|in|cm)?)/i);
-            const rawDim = specDim || p.dimensions || (titleDimMatch ? titleDimMatch[1] : "16 x 14 x 3 Inches");
+            // 2. Determine Exact Dimensions & Available Sizes (Small / Medium / Large / XL)
+      const specSizes = getSpec(/^(size|sizes|available sizes)$/i);
+      const rawSizeCfg = getSpec(/^size_config$/i);
+      let szMap = {};
+      if (rawSizeCfg) { try { szMap = typeof rawSizeCfg === "string" ? JSON.parse(rawSizeCfg) : rawSizeCfg; } catch (e) {} }
+      const sizeList = specSizes ? specSizes.split(",").map(s => s.trim()).filter(Boolean) : [];
+      const activeSize = sizeList.includes(selectedSize) ? selectedSize : (sizeList[0] || "");
+      const activeSizeCfg = (activeSize && szMap[activeSize]) ? szMap[activeSize] : {};
 
-            const nums = (rawDim.match(/\d+(?:\.\d+)?/g) || ["16", "14", "3"]).map(Number);
-            const lenIn = nums[0] || 16;
-            const widIn = nums[1] || 14;
-            const depIn = nums[2] || 3;
+      const titleDimMatch = (p.name || "").match(/(\d+\s*[xX*]\s*\d+(?:\s*[xX*]\s*\d+)?\s*(?:Inch|Inches|in|cm)?)/i);
+      const rawDim = activeSizeCfg.dimensions || specDim || p.dimensions || (titleDimMatch ? titleDimMatch[1] : "17 x 14 Inches");
 
-            const isCm = unit === "cm";
-            const fmtVal = (v) => isCm ? `${Math.round(v * 2.54)} cm` : `${v} in`;
-            const fmtShort = (v) => isCm ? `${Math.round(v * 2.54)}cm` : `${v}"`;
+      const nums = (rawDim.match(/\d+(?:\.\d+)?/g) || ["17", "14"]).map(Number);
+      const lenIn = nums[0] || 17;
+      const widIn = nums[1] || 14;
+      const depIn = nums.length >= 3 && nums[2] > 0 ? nums[2] : null;
 
-            const displayHeadline = isCm
-              ? `${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm (${lenIn} x ${widIn} x ${depIn} Inches)`
-              : `${lenIn} x ${widIn} x ${depIn} Inches (${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm)`;
+      const isCm = unit === "cm";
+      const fmtVal = (v) => isCm ? `${Math.round(v * 2.54)} cm` : `${v} in`;
+      const fmtShort = (v) => isCm ? `${Math.round(v * 2.54)}cm` : `${v}"`;
 
-            const materialLabel = specMat || ((p.name || "").includes("120 GSM") ? "120 GSM" : "Premium");
+      const displayHeadline = depIn
+        ? (isCm
+            ? `${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm (${lenIn} x ${widIn} x ${depIn} Inches)`
+            : `${lenIn} x ${widIn} x ${depIn} Inches (${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} x ${Math.round(depIn * 2.54)} cm)`)
+        : (isCm
+            ? `${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} cm (${lenIn} x ${widIn} Inches)`
+            : `${lenIn} x ${widIn} Inches (${Math.round(lenIn * 2.54)} x ${Math.round(widIn * 2.54)} cm)`);
+
+      const materialLabel = specMat || ((p.name || "").includes("120 GSM") ? "120 GSM" : "Premium");
 
             const getColorHex = (colName) => {
               if (colorMap[colName]) return colorMap[colName];
