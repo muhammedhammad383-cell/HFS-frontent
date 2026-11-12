@@ -165,27 +165,39 @@ export default function ProductDetail() {
             const matchKey = Object.keys(pkMap).find(k => k.toLowerCase() === curPack.toLowerCase());
             const pkData = matchKey ? pkMap[matchKey] : null;
 
-            const isFirstPack = pkList.length === 0 || curPack.toLowerCase() === (pkList[0] || "").toLowerCase();
+            const firstPkName = pkList[0] || "";
+            const firstBaseKey = Object.keys(pkMap).find(k => k.toLowerCase() === firstPkName.toLowerCase());
+            const baseFirstSale = (firstBaseKey && pkMap[firstBaseKey]?.sale_price) ? Number(pkMap[firstBaseKey].sale_price) : price;
+            const baseFirstMrp = (firstBaseKey && pkMap[firstBaseKey]?.price) ? Number(pkMap[firstBaseKey].price) : Number(p.price || baseFirstSale);
+
+            const firstSzKey = Object.keys(szPkMapTop).find(k => k.toLowerCase() === firstPkName.toLowerCase());
+            const szFirstSale = (firstSzKey && szPkMapTop[firstSzKey]?.sale_price)
+              ? Number(szPkMapTop[firstSzKey].sale_price)
+              : (szDataTop && szDataTop.sale_price ? Number(szDataTop.sale_price) : null);
+            const szFirstMrp = (firstSzKey && szPkMapTop[firstSzKey]?.price)
+              ? Number(szPkMapTop[firstSzKey].price)
+              : (szDataTop && szDataTop.price ? Number(szDataTop.price) : null);
+
+            const saleRatio = (szFirstSale && baseFirstSale > 0) ? (szFirstSale / baseFirstSale) : 1;
+            const mrpRatio = (szFirstMrp && baseFirstMrp > 0) ? (szFirstMrp / baseFirstMrp) : saleRatio;
+
+            const isFirstPack = pkList.length === 0 || curPack.toLowerCase() === firstPkName.toLowerCase();
 
             const dynSale = (szPkData && szPkData.sale_price)
               ? Number(szPkData.sale_price)
-              : (isFirstPack && szDataTop && szDataTop.sale_price)
-              ? Number(szDataTop.sale_price)
+              : (isFirstPack && szFirstSale)
+              ? szFirstSale
               : (pkData && pkData.sale_price)
-              ? Number(pkData.sale_price)
-              : (szDataTop && szDataTop.sale_price)
-              ? Number(szDataTop.sale_price)
-              : price;
+              ? Math.round(Number(pkData.sale_price) * saleRatio)
+              : (szFirstSale || price);
 
             const dynMrp = (szPkData && szPkData.price)
               ? Number(szPkData.price)
-              : (isFirstPack && szDataTop && szDataTop.price)
-              ? Number(szDataTop.price)
+              : (isFirstPack && szFirstMrp)
+              ? szFirstMrp
               : (pkData && pkData.price)
-              ? Number(pkData.price)
-              : (szDataTop && szDataTop.price)
-              ? Number(szDataTop.price)
-              : Number(p.price || dynSale);
+              ? Math.round(Number(pkData.price) * mrpRatio)
+              : (szFirstMrp || Number(p.price || dynSale));
 
             const dynPct = dynMrp > dynSale ? Math.round(((dynMrp - dynSale) / dynMrp) * 100) : pct;
               return (
@@ -428,22 +440,28 @@ export default function ProductDetail() {
                 const sizePackPrices = (activeSizeCfg && activeSizeCfg.pack_prices) || {};
                 const currentPack = packList.includes(selectedPack) ? selectedPack : packList[0];
 
+                const firstPkName = packList[0] || "";
+                const firstBaseKey = Object.keys(basePackPrices).find(k => k.toLowerCase() === firstPkName.toLowerCase());
+                const baseFirstSale = (firstBaseKey && basePackPrices[firstBaseKey]?.sale_price) ? Number(basePackPrices[firstBaseKey].sale_price) : price;
+                const firstSzKey = Object.keys(sizePackPrices).find(k => k.toLowerCase() === firstPkName.toLowerCase());
+                const szFirstSale = (firstSzKey && sizePackPrices[firstSzKey]?.sale_price)
+                  ? Number(sizePackPrices[firstSzKey].sale_price)
+                  : (activeSizeCfg && activeSizeCfg.sale_price ? Number(activeSizeCfg.sale_price) : null);
+                const saleRatio = (szFirstSale && baseFirstSale > 0) ? (szFirstSale / baseFirstSale) : 1;
+
                 const getPriceForPack = (pkName, idx) => {
                   const sKey = Object.keys(sizePackPrices).find(k => k.toLowerCase() === pkName.toLowerCase());
                   if (sKey && sizePackPrices[sKey]?.sale_price) {
                     return Number(sizePackPrices[sKey].sale_price);
                   }
-                  if (idx === 0 && activeSizeCfg && activeSizeCfg.sale_price) {
-                    return Number(activeSizeCfg.sale_price);
+                  if (idx === 0 && szFirstSale) {
+                    return szFirstSale;
                   }
                   const bKey = Object.keys(basePackPrices).find(k => k.toLowerCase() === pkName.toLowerCase());
                   if (bKey && basePackPrices[bKey]?.sale_price) {
-                    return Number(basePackPrices[bKey].sale_price);
+                    return Math.round(Number(basePackPrices[bKey].sale_price) * saleRatio);
                   }
-                  if (activeSizeCfg && activeSizeCfg.sale_price) {
-                    return Number(activeSizeCfg.sale_price);
-                  }
-                  return price;
+                  return szFirstSale || price;
                 };
 
                 return (
