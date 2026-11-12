@@ -106,16 +106,69 @@ export default function Products() {
     if (filters.in_stock) params.set("in_stock", "true");
     if (filters.seller) params.set("seller", filters.seller);
     const { data } = await api.get(`/products?${params.toString()}`);
-    setProducts(data.products);
-    setTotal(data.total);
+    let resultProducts = data.products || [];
+    let resultTotal = data.total || 0;
+
+    if (filters.category) {
+      const normCat = (str) =>
+        String(str || "")
+          .toLowerCase()
+          .trim()
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .replace(/shoes/g, "shoe")
+          .replace(/clothes/g, "cloth")
+          .replace(/covers/g, "cover")
+          .replace(/bags/g, "bag")
+          .replace(/pouches/g, "pouch");
+
+      const matchedCatObj = cats.find(
+        (c) =>
+          normCat(c.slug) === normCat(filters.category) ||
+          normCat(c.name) === normCat(filters.category) ||
+          String(c.id) === String(filters.category)
+      );
+      const targetNorm = normCat(matchedCatObj?.name || filters.category);
+      const targetSlugNorm = normCat(matchedCatObj?.slug || filters.category);
+
+      const allParams = new URLSearchParams(params);
+      allParams.delete("category");
+      allParams.set("limit", "200");
+      allParams.set("page", "1");
+      const { data: allData } = await api.get(`/products?${allParams.toString()}`);
+      const allList = allData?.products || [];
+
+      const matchedList = allList.filter((p) => {
+        const pCatNorm = normCat(p.category || p.category_name || "");
+        const pSlugNorm = normCat(p.category_slug || "");
+        if (
+          pCatNorm === targetNorm ||
+          pCatNorm === targetSlugNorm ||
+          (pSlugNorm && (pSlugNorm === targetNorm || pSlugNorm === targetSlugNorm)) ||
+          (matchedCatObj?.id && String(p.category_id) === String(matchedCatObj.id))
+        ) {
+          return true;
+        }
+        return false;
+      });
+
+      if (matchedList.length > resultProducts.length) {
+        resultProducts = matchedList;
+        resultTotal = matchedList.length;
+      }
+    }
+
+    setProducts(resultProducts);
+    setTotal(resultTotal);
     setLoading(false);
-  }, [sort, page, filters]);
+  }, [sort, page, filters, cats]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { setPage(1); }, [filters, sort]);
 
   const heading = filters.search ? `Results for "${filters.search}"`
-    : filters.category ? cats.find((c) => c.slug === filters.category)?.name || "Products"
+    : filters.category ? cats.find((c) => (c.slug || "").toLowerCase() === filters.category.toLowerCase() || (c.name || "").toLowerCase() === filters.category.toLowerCase())?.name || filters.category.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())
     : filters.featured ? "Featured Products" : filters.trending ? "Trending Now" : "All Products";
 
   const pages = Math.ceil(total / 20);
