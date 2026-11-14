@@ -208,7 +208,26 @@ export default function ProductDetail() {
               );
             })()}
           </div>
-          <p className="mt-1 text-sm font-medium text-trust">{p.stock > 0 ? `In stock (${p.stock} available)` : "Out of stock"}</p>
+          <p className="mt-1 text-sm font-medium text-trust">{(() => {
+              let szMapStk = {};
+              const rawSzStk = Array.isArray(p.specifications)
+                ? (p.specifications.find(s => (s.key || "").toLowerCase() === "size_config")?.value)
+                : (p.specifications?.size_config);
+              if (rawSzStk) { try { szMapStk = typeof rawSzStk === "string" ? JSON.parse(rawSzStk) : rawSzStk; } catch (e) {} }
+              const spSizesStk = Array.isArray(p.specifications)
+                ? (p.specifications.find(s => /^(size|sizes|available sizes)$/i.test((s.key || "").trim()))?.value)
+                : "";
+              const szListStk = spSizesStk ? spSizesStk.split(",").map(x => x.trim()).filter(Boolean) : [];
+              const curSz = szListStk.includes(selectedSize) ? selectedSize : (szListStk[0] || "");
+              const szKey = Object.keys(szMapStk).find(k => k.toLowerCase() === curSz.toLowerCase());
+              const szData = szKey ? szMapStk[szKey] : null;
+              if (szData) {
+                const szIn = szData.in_stock !== false && (szData.stock === undefined || szData.stock === "" || Number(szData.stock) > 0);
+                if (!szIn) return `Out of stock (${curSz})`;
+                if (szData.stock !== undefined && szData.stock !== "") return `In stock (${szData.stock} available in ${curSz})`;
+              }
+              return p.stock > 0 ? `In stock (${p.stock} available)` : "Out of stock";
+            })()}</p>
 
           
           {/* Colour Selector + Dimensions & Visual Size Guide */}
@@ -273,8 +292,16 @@ export default function ProductDetail() {
       let szMap = {};
       if (rawSizeCfg) { try { szMap = typeof rawSizeCfg === "string" ? JSON.parse(rawSizeCfg) : rawSizeCfg; } catch (e) {} }
       const sizeList = specSizes ? specSizes.split(",").map(s => s.trim()).filter(Boolean) : [];
-      const activeSize = sizeList.includes(selectedSize) ? selectedSize : (sizeList[0] || "");
-      const activeSizeCfg = (activeSize && szMap[activeSize]) ? szMap[activeSize] : {};
+      const isSizeInStockFn = (szName) => {
+        const k = Object.keys(szMap).find(x => x.toLowerCase() === (szName || "").toLowerCase());
+        const cfg = k ? szMap[k] : null;
+        if (!cfg) return true;
+        return cfg.in_stock !== false && (cfg.stock === undefined || cfg.stock === "" || Number(cfg.stock) > 0);
+      };
+      const firstAvailSize = sizeList.find(s => isSizeInStockFn(s)) || sizeList[0] || "";
+      const activeSize = sizeList.includes(selectedSize) ? selectedSize : firstAvailSize;
+      const activeSizeKey = Object.keys(szMap).find(x => x.toLowerCase() === activeSize.toLowerCase());
+      const activeSizeCfg = activeSizeKey ? (szMap[activeSizeKey] || {}) : {};
 
       const titleDimMatch = (p.name || "").match(/(\d+\s*[xX*]\s*\d+(?:\s*[xX*]\s*\d+)?\s*(?:Inch|Inches|in|cm)?)/i);
       const rawDim = activeSizeCfg.dimensions || specDim || p.dimensions || (titleDimMatch ? titleDimMatch[1] : "17 x 14 Inches");
@@ -334,7 +361,12 @@ export default function ProductDetail() {
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {displayColors.map((col, idx) => {
                       const hex = getColorHex(col);
-                      const isAvailable = p.stock > 0 && inStockColors.some(c => c.toLowerCase() === col.toLowerCase());
+                      const rawColStock = getSpec(/^color_stock$/i);
+                    let colStockMap = {};
+                    if (rawColStock) { try { colStockMap = typeof rawColStock === "string" ? JSON.parse(rawColStock) : rawColStock; } catch (e) {} }
+                    const cKey = Object.keys(colStockMap).find(k => k.toLowerCase() === String(col || "").toLowerCase());
+                    const cCfg = cKey ? colStockMap[cKey] : null;
+                    const isAvailable = cCfg ? (cCfg.in_stock !== false && (cCfg.stock === undefined || cCfg.stock === "" || Number(cCfg.stock) > 0)) : (p.stock > 0 && inStockColors.some(c => c.toLowerCase() === col.toLowerCase()));
                       const isSel = activeColor.toLowerCase() === col.toLowerCase();
                       return (
                         <button
@@ -371,7 +403,7 @@ export default function ProductDetail() {
                               {col}
                             </span>
                             <span className={`text-[9px] font-medium ${isAvailable ? "text-emerald-600" : "text-rose-500"}`}>
-                              {isAvailable ? "In Stock" : "Not Available"}
+                              {!isAvailable ? "Out of Stock" : (cCfg && cCfg.stock !== undefined && cCfg.stock !== "" ? `In Stock (${cCfg.stock})` : "In Stock")}
                             </span>
                           </div>
                         </button>
@@ -395,6 +427,7 @@ export default function ProductDetail() {
                       const isSel = activeSize.toLowerCase() === sz.toLowerCase();
                       const sKey = Object.keys(szMap).find(k => k.toLowerCase() === sz.toLowerCase());
                       const sCfg = sKey ? (szMap[sKey] || {}) : {};
+                      const szInStock = sCfg.in_stock !== false && (sCfg.stock === undefined || sCfg.stock === "" || Number(sCfg.stock) > 0);
                       return (
                         <button
                           key={sz}
@@ -409,15 +442,26 @@ export default function ProductDetail() {
                             }
                           }}
                           className={`flex flex-col items-center rounded-xl border px-3.5 py-1.5 text-xs transition-all ${
-                            isSel
+                            !szInStock
+                              ? isSel
+                                ? "border-rose-400 bg-rose-50/80 font-bold text-slate-800 ring-1 ring-rose-400"
+                                : "border-rose-200 bg-slate-50 text-slate-400 opacity-75"
+                              : isSel
                               ? "border-brand bg-amber-50/90 font-bold text-slate-900 shadow-sm ring-1 ring-brand"
                               : "border-border bg-white font-medium text-slate-700 hover:border-slate-300"
                           }`}
                         >
-                          <span>{isSel ? `✓ ${sz}` : sz}</span>
+                          <span className={!szInStock ? "line-through decoration-rose-500" : ""}>{isSel ? `✓ ${sz}` : sz}</span>
                           {sCfg.dimensions && (
                             <span className="text-[10px] font-normal text-slate-500">{sCfg.dimensions}</span>
                           )}
+                          <span className={`text-[10px] font-semibold ${szInStock ? "text-emerald-600" : "text-rose-600 font-bold"}`}>
+                            {!szInStock
+                              ? "Out of Stock"
+                              : sCfg.stock !== undefined && sCfg.stock !== ""
+                              ? `In Stock (${sCfg.stock} left)`
+                              : "In Stock"}
+                          </span>
                         </button>
                       );
                     })}
@@ -616,7 +660,7 @@ export default function ProductDetail() {
             <table className="w-full text-sm">
               <tbody>
                 {(() => {
-                const hiddenKeys = ["color_images", "pack_prices", "size_config"];
+                const hiddenKeys = ["color_images", "pack_prices", "size_config", "color_stock"];
                 const seen = new Map();
                 (p.specifications || []).forEach((s) => {
                   const rawKey = (s.key || "").trim();

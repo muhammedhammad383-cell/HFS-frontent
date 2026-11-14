@@ -369,6 +369,9 @@ function Sellers() {
       if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
         specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
       }
+      if (form.colorStock && Object.keys(form.colorStock).length > 0) {
+        specArray.push({ key: "color_stock", value: JSON.stringify(form.colorStock) });
+      }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
       const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
@@ -488,6 +491,9 @@ function ProductApprovals() {
       if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
         specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
       }
+      if (form.colorStock && Object.keys(form.colorStock).length > 0) {
+        specArray.push({ key: "color_stock", value: JSON.stringify(form.colorStock) });
+      }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
       const slimImages = await Promise.all(rawImgList.map(u => shrinkDataUrl(u)));
@@ -535,6 +541,8 @@ function ProductApprovals() {
     const sizesStr = findSpec("Available Sizes") || findSpec("Sizes") || "";
     let sizeCfgObj = {};
     try { const sc = findSpec("size_config"); if (sc) sizeCfgObj = JSON.parse(sc); } catch {}
+    let colorStockObj = {};
+    try { const cs = findSpec("color_stock"); if (cs) colorStockObj = JSON.parse(cs); } catch {}
     let packPricesObj = {};
     try { const pp = findSpec("pack_prices"); if (pp) packPricesObj = JSON.parse(pp); } catch {}
     let colorImgsObj = {};
@@ -547,7 +555,7 @@ function ProductApprovals() {
         });
       }
     } catch {}
-    const customSpecs = specs.filter(s => !["color", "colors", "available colors", "packs", "pack size", "available packs", "dimensions", "color_images", "pack_prices", "available sizes", "sizes", "size", "size_config"].includes((s.key || "").toLowerCase().trim()));
+    const customSpecs = specs.filter(s => !["color", "colors", "available colors", "packs", "pack size", "available packs", "dimensions", "color_images", "pack_prices", "available sizes", "sizes", "size", "size_config", "color_stock"].includes((s.key || "").toLowerCase().trim()));
     setForm({
       id: p.id,
       name: p.name || "",
@@ -565,6 +573,7 @@ function ProductApprovals() {
       packPrices: packPricesObj,
       sizes: sizesStr,
       sizeConfig: sizeCfgObj,
+      colorStock: colorStockObj,
       colorImages: colorImgsObj,
       specs_list: customSpecs.length ? customSpecs : [{ key: "Material", value: "Quilted Satin & PVC" }]
     });
@@ -578,7 +587,7 @@ function ProductApprovals() {
           <p className="font-heading font-bold text-slate-900">Store Products ({rows.length})</p>
           <p className="text-xs text-muted-foreground">Manage active catalog items listed on HFS BAZAAR</p>
         </div>
-        <Button onClick={() => { setForm({ name: "", price: "", sale_price: "", image: "", images: [], category: "Hanging Saree Covers", description: "", colors: "Cream", packs: "Pack of 2", dimensions: "27L x 18W INCH", stock: 50, sku: "HFS-HSC-01", colorImages: {}, packPrices: {}, sizes: "", sizeConfig: {} }); setAdding(true); }} className="bg-brand text-xs text-white hover:bg-brand-dark">
+        <Button onClick={() => { setForm({ name: "", price: "", sale_price: "", image: "", images: [], category: "Hanging Saree Covers", description: "", colors: "Cream", packs: "Pack of 2", dimensions: "27L x 18W INCH", stock: 50, sku: "HFS-HSC-01", colorImages: {}, packPrices: {}, sizes: "", sizeConfig: {}, colorStock: {} }); setAdding(true); }} className="bg-brand text-xs text-white hover:bg-brand-dark">
           + Add New Product
         </Button>
       </div>
@@ -783,7 +792,53 @@ function ProductApprovals() {
                       </div>
                     )}
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label className="text-xs font-bold text-slate-800 block mb-1">🎨 Colour-wise Stock Status <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-normal text-slate-700">Tap to mark Out of Stock or set Qty</span></label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {(form.colors || "Cream").split(",").map(s => s.trim()).filter(Boolean).map(cName => {
+              const cObj = (form.colorStock && form.colorStock[cName]) || {};
+              const cInStock = cObj.in_stock !== false && (cObj.stock === undefined || cObj.stock === "" || Number(cObj.stock) > 0);
+              return (
+                <div key={cName} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm">
+                  <span className="text-xs font-bold text-slate-800">{cName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm(prev => {
+                        const map = prev.colorStock || {};
+                        const cur = map[cName] || {};
+                        const nextIn = !cInStock;
+                        const nextQty = !nextIn ? "0" : (cur.stock === "0" || cur.stock === 0 ? "50" : (cur.stock ?? ""));
+                        return { ...prev, colorStock: { ...map, [cName]: { ...cur, in_stock: nextIn, stock: nextQty } } };
+                      });
+                    }}
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                      cInStock ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-rose-100 text-rose-800 border border-rose-300"
+                    }`}
+                  >
+                    {cInStock ? "✓ In Stock" : "✕ Out of Stock"}
+                  </button>
+                  <input
+                    type="number"
+                    placeholder="Qty"
+                    value={cObj.stock ?? ""}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setForm(prev => {
+                        const map = prev.colorStock || {};
+                        const cur = map[cName] || {};
+                        const nextIn = val === "" ? true : Number(val) > 0;
+                        return { ...prev, colorStock: { ...map, [cName]: { ...cur, stock: val, in_stock: nextIn } } };
+                      });
+                    }}
+                    className="w-14 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-center"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
             <div>
               <label className="text-xs font-bold text-slate-800">4. Available Sizes & Size-wise Pack Prices <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-normal text-slate-700">Optional</span></label>
@@ -822,8 +877,61 @@ function ProductApprovals() {
                 return (
                   <div key={szName} className="rounded-xl border border-amber-300 bg-white p-2.5 shadow-sm space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-950">📏 Size: {szName}</span>
-                      <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-950">📏 Size: {szName}</span>
+                        {(() => {
+                          const isInStock = szObj.in_stock !== false && (szObj.stock === undefined || szObj.stock === "" || Number(szObj.stock) > 0);
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setForm(prev => {
+                                  const map = prev.sizeConfig || {};
+                                  const cur = map[szName] || {};
+                                  const nextInStock = !isInStock;
+                                  const nextStock = !nextInStock ? "0" : (cur.stock === "0" || cur.stock === 0 ? "50" : (cur.stock ?? ""));
+                                  return {
+                                    ...prev,
+                                    sizeConfig: {
+                                      ...map,
+                                      [szName]: { ...cur, in_stock: nextInStock, stock: nextStock }
+                                    }
+                                  };
+                                });
+                              }}
+                              className={`rounded-lg px-2 py-1 text-[10px] font-bold transition-all ${
+                                isInStock
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  : "bg-rose-100 text-rose-800 border border-rose-300"
+                              }`}
+                            >
+                              {isInStock ? "✓ In Stock" : "✕ Out of Stock"}
+                            </button>
+                          );
+                        })()}
+                        <input
+                          type="number"
+                          placeholder="Qty (50)"
+                          value={szObj.stock ?? ""}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setForm(prev => {
+                              const map = prev.sizeConfig || {};
+                              const cur = map[szName] || {};
+                              const nextInStock = val === "" ? true : Number(val) > 0;
+                              return {
+                                ...prev,
+                                sizeConfig: {
+                                  ...map,
+                                  [szName]: { ...cur, stock: val, in_stock: nextInStock }
+                                }
+                              };
+                            });
+                          }}
+                          className="w-16 rounded border border-slate-300 px-1.5 py-1 text-xs text-center"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-1 min-w-[170px]">
                         <span className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">Dimensions:</span>
                         <input
                           type="text"
@@ -1158,6 +1266,9 @@ function AdminOrders() {
       }
       if (form.sizeConfig && Object.keys(form.sizeConfig).length > 0) {
         specArray.push({ key: "size_config", value: JSON.stringify(form.sizeConfig) });
+      }
+      if (form.colorStock && Object.keys(form.colorStock).length > 0) {
+        specArray.push({ key: "color_stock", value: JSON.stringify(form.colorStock) });
       }
 
       const rawImgList = combinedImages.length ? combinedImages.map(String) : (finalMainImage ? [String(finalMainImage)] : []);
