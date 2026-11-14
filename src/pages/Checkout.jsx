@@ -76,11 +76,47 @@ export default function Checkout() {
     } catch (e) { toast.error(apiError(e)); setDiscount(0); setAppliedCoupon(""); }
   };
 
+  const [verifiedMobile, setVerifiedMobile] = useState(() => localStorage.getItem("hfs_verified_phone") || "");
+  const [chkOtpSent, setChkOtpSent] = useState("");
+  const [chkOtpInput, setChkOtpInput] = useState("");
+
+  const cleanChkMobile = String(addr.mobile || "").replace(/\D/g, "").slice(-10);
+  const isValidChkMobile = /^[6-9]\d{9}$/.test(cleanChkMobile);
+  const isChkMobileVerified = Boolean(isValidChkMobile && verifiedMobile === cleanChkMobile);
+
+  const sendCheckoutMobileOtp = async () => {
+    if (!isValidChkMobile) return toast.error("Please enter a valid 10-digit Indian mobile number (starting with 6-9)");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setChkOtpSent(code);
+    setChkOtpInput("");
+    try { await api.post("/auth/send-otp", { phone: cleanChkMobile, type: "phone", otp: code }); } catch (e) {}
+    toast.success(`OTP for +91 ${cleanChkMobile} is: ${code}`, { duration: 10000 });
+  };
+
+  const confirmCheckoutMobileOtp = () => {
+    if (chkOtpInput.trim() === chkOtpSent && chkOtpSent) {
+      setVerifiedMobile(cleanChkMobile);
+      localStorage.setItem("hfs_verified_phone", cleanChkMobile);
+      setChkOtpSent("");
+      setChkOtpInput("");
+      toast.success("Mobile number verified for delivery! ✓");
+    } else {
+      toast.error("Invalid OTP. Please enter the 6-digit code shown.");
+    }
+  };
+
   const fullCombinedAddress = [addr.house_no, addr.street_area].filter(Boolean).join(", ").trim() || (addr.address_line || "").trim();
-  const validAddr = addr.full_name && addr.mobile.length >= 10 && addr.pincode.length === 6 && addr.state && addr.city && (addr.house_no || "").trim().length >= 1 && (addr.street_area || "").trim().length >= 3;
+  const validAddr = addr.full_name && isValidChkMobile && addr.pincode.length === 6 && addr.state && addr.city && (addr.house_no || "").trim().length >= 1 && (addr.street_area || "").trim().length >= 3;
 
     const placeOrder = async () => {
     try { localStorage.setItem("hfs_saved_address", JSON.stringify(addr)); } catch (e) {}
+    if (!isValidChkMobile) {
+      return toast.error("Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9)");
+    }
+    if (!isChkMobileVerified) {
+      if (!chkOtpSent) sendCheckoutMobileOtp();
+      return toast.error("Please verify your mobile number with the 6-digit OTP before placing order");
+    }
     if (!validAddr) {
       if (!(addr.house_no || "").trim()) return toast.error("Please enter Flat / House / Room No. & Building Name");
       if ((addr.street_area || "").trim().length < 3) return toast.error("Please enter Road / Street / Area / Colony");
