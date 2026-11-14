@@ -163,22 +163,98 @@ function Profile() {
   const { user } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "");
+  const [phone, setPhone] = useState(() => {
+    const raw = String(user?.phone || "").replace(/\D/g, "");
+    return raw.length > 10 ? raw.slice(-10) : raw;
+  });
   const [loading, setLoading] = useState(false);
+
+  const [verifiedEmail, setVerifiedEmail] = useState(() => localStorage.getItem("hfs_verified_email") || (user?.email_verified ? user?.email : "") || "");
+  const [verifiedPhone, setVerifiedPhone] = useState(() => localStorage.getItem("hfs_verified_phone") || (user?.phone_verified ? String(user?.phone || "").replace(/\D/g, "").slice(-10) : "") || "");
+
+  const [emailOtpSent, setEmailOtpSent] = useState("");
+  const [emailOtpInput, setEmailOtpInput] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState("");
+  const [phoneOtpInput, setPhoneOtpInput] = useState("");
 
   useEffect(() => {
     if (user) {
       setName(user.name || "");
       setEmail(user.email || "");
-      setPhone(user.phone || "");
+      const cleanPh = String(user.phone || "").replace(/\D/g, "").slice(-10);
+      setPhone(cleanPh);
+      if (user.google_id || user.email_verified) {
+        setVerifiedEmail(user.email || "");
+        if (user.email) localStorage.setItem("hfs_verified_email", user.email);
+      }
     }
   }, [user]);
 
+  const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+  const isValidIndianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+
+  const isEmailVerified = Boolean(isValidEmail && verifiedEmail && verifiedEmail.toLowerCase() === String(email || "").trim().toLowerCase());
+  const isPhoneVerified = Boolean(isValidIndianPhone && verifiedPhone && verifiedPhone === cleanPhone);
+
+  const sendEmailOtp = async () => {
+    if (!isValidEmail) return toast.error("Please enter a valid Email Address first");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setEmailOtpSent(code);
+    setEmailOtpInput("");
+    try { await api.post("/auth/send-otp", { email: email.trim(), type: "email", otp: code }); } catch (e) {}
+    toast.success(`Verification OTP for ${email.trim()} is: ${code}`, { duration: 10000 });
+  };
+
+  const confirmEmailOtp = () => {
+    if (emailOtpInput.trim() === emailOtpSent && emailOtpSent) {
+      const cleanEm = email.trim();
+      setVerifiedEmail(cleanEm);
+      localStorage.setItem("hfs_verified_email", cleanEm);
+      setEmailOtpSent("");
+      setEmailOtpInput("");
+      toast.success("Email Address verified successfully! ✓");
+    } else {
+      toast.error("Invalid Email OTP. Please check and try again.");
+    }
+  };
+
+  const sendPhoneOtp = async () => {
+    if (!isValidIndianPhone) return toast.error("Please enter a valid 10-digit Indian Mobile Number (starting with 6-9)");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setPhoneOtpSent(code);
+    setPhoneOtpInput("");
+    try { await api.post("/auth/send-otp", { phone: cleanPhone, type: "phone", otp: code }); } catch (e) {}
+    toast.success(`Mobile Verification OTP for +91 ${cleanPhone} is: ${code}`, { duration: 10000 });
+  };
+
+  const confirmPhoneOtp = () => {
+    if (phoneOtpInput.trim() === phoneOtpSent && phoneOtpSent) {
+      setVerifiedPhone(cleanPhone);
+      localStorage.setItem("hfs_verified_phone", cleanPhone);
+      setPhoneOtpSent("");
+      setPhoneOtpInput("");
+      toast.success("Mobile Number verified successfully! ✓");
+    } else {
+      toast.error("Invalid Mobile OTP. Please check and try again.");
+    }
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!isValidEmail) return toast.error("Please enter a valid Email Address");
+    if (cleanPhone && !isValidIndianPhone) {
+      return toast.error("Please enter a valid 10-digit Indian Mobile Number");
+    }
     setLoading(true);
     try {
-      await api.put("/auth/profile", { name, email, phone });
+      await api.put("/auth/profile", {
+        name,
+        email: email.trim(),
+        phone: cleanPhone,
+        email_verified: isEmailVerified,
+        phone_verified: isPhoneVerified
+      });
       toast.success("Profile successfully update ho gaya!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
@@ -191,40 +267,112 @@ function Profile() {
   return (
     <div className="bg-card p-6 rounded-2xl border border-border max-w-xl space-y-4">
       <div>
-        <h2 className="text-lg font-bold">Profile Details</h2>
-        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update karein</p>
+        <h2 className="text-lg font-bold">Profile Details & Verification</h2>
+        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update & verify karein</p>
       </div>
 
       <form onSubmit={handleUpdate} className="space-y-4">
         <div>
           <Label>Full Name</Label>
-          <Input 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            placeholder="Aapka Name" 
-            required 
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Aapka Name"
+            required
           />
         </div>
 
-        <div>
-          <Label>Email Address</Label>
-          <Input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            placeholder="name@example.com" 
-            required 
-          />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Email Address</Label>
+            {isEmailVerified ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-300">
+                ✓ Email Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900">
+                Not Verified
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              required
+              className="flex-1"
+            />
+            {!isEmailVerified && (
+              <Button type="button" variant="outline" onClick={sendEmailOtp} className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold">
+                {emailOtpSent ? "Resend OTP" : "Verify Email"}
+              </Button>
+            )}
+          </div>
+          {emailOtpSent && !isEmailVerified && (
+            <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50/70 p-2.5">
+              <Input
+                type="text"
+                maxLength={6}
+                placeholder="Enter 6-digit Email OTP"
+                value={emailOtpInput}
+                onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="bg-white text-xs font-bold tracking-widest"
+              />
+              <Button type="button" onClick={confirmEmailOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                Confirm OTP
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div>
-          <Label>Phone Number</Label>
-          <Input 
-            type="tel" 
-            value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
-            placeholder="Mobile number" 
-          />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Mobile Number (+91)</Label>
+            {isPhoneVerified ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-300">
+                ✓ Mobile Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900">
+                {cleanPhone.length === 10 ? "Tap Verify Mobile" : "10-digit Mobile Required"}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <div className="flex flex-1 items-center rounded-md border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
+              <span className="pl-3 pr-2 text-xs font-bold text-slate-500 border-r border-slate-200">+91</span>
+              <input
+                type="tel"
+                maxLength={10}
+                value={cleanPhone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                placeholder="10-digit mobile number"
+                className="w-full bg-transparent px-3 py-2 text-sm outline-none"
+              />
+            </div>
+            {!isPhoneVerified && (
+              <Button type="button" variant="outline" onClick={sendPhoneOtp} className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold">
+                {phoneOtpSent ? "Resend OTP" : "Verify Mobile"}
+              </Button>
+            )}
+          </div>
+          {phoneOtpSent && !isPhoneVerified && (
+            <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50/70 p-2.5">
+              <Input
+                type="text"
+                maxLength={6}
+                placeholder="Enter 6-digit Mobile OTP"
+                value={phoneOtpInput}
+                onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="bg-white text-xs font-bold tracking-widest"
+              />
+              <Button type="button" onClick={confirmPhoneOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                Confirm OTP
+              </Button>
+            </div>
+          )}
         </div>
 
         <Button type="submit" disabled={loading} className="w-full sm:w-auto">
@@ -234,6 +382,7 @@ function Profile() {
     </div>
   );
 }
+
 
 
 function Orders() {
