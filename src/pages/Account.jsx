@@ -173,6 +173,8 @@ function Profile() {
   const [verifiedPhone, setVerifiedPhone] = useState(() => localStorage.getItem("hfs_verified_phone") || String(user?.phone || "").replace(/\D/g, "").slice(-10) || "");
 
   const [emailOtpSent, setEmailOtpSent] = useState("");
+  const [emailRealSent, setEmailRealSent] = useState(false);
+  const [phoneRealSent, setPhoneRealSent] = useState(false);
   const [emailOtpInput, setEmailOtpInput] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState("");
   const [phoneOtpInput, setPhoneOtpInput] = useState("");
@@ -222,6 +224,7 @@ function Profile() {
     try {
       const { data } = await api.post("/auth/send-otp", { email: cleanEmail, type: "email", otp: code });
       if (data?.email_sent) {
+        setEmailRealSent(true);
         toast.success(`6-digit OTP sent to ${cleanEmail}!`, { duration: 8000 });
         return;
       }
@@ -246,7 +249,14 @@ function Profile() {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setPhoneOtpSent(code);
     setPhoneOtpInput("");
-    try { await api.post("/auth/send-otp", { phone: cleanPhone, type: "phone", otp: code }); } catch (e) {}
+    try {
+      const { data } = await api.post("/auth/send-otp", { phone: cleanPhone, type: "phone", otp: code });
+      if (data?.sms_sent) {
+        setPhoneRealSent(true);
+        toast.success(`6-digit OTP sent via SMS to +91 ${cleanPhone}!`, { duration: 8000 });
+        return;
+      }
+    } catch (e) {}
     toast.success(`Verification OTP for new mobile +91 ${cleanPhone} is: ${code}`, { duration: 10000 });
   };
 
@@ -344,10 +354,10 @@ function Profile() {
           </div>
           {emailOtpSent && !isEmailVerified && (
             <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
-              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+              {!emailRealSent && (<div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
                 <span className="text-slate-600">OTP Code: <strong className="text-amber-900 tracking-wider">{emailOtpSent}</strong></span>
                 <button type="button" onClick={() => setEmailOtpInput(emailOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
-              </div>
+              </div>)}
               <div className="flex items-center gap-2">
                 <Input
                   type="text"
@@ -398,10 +408,10 @@ function Profile() {
           </div>
           {phoneOtpSent && !isPhoneVerified && (
             <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
-              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+              {!phoneRealSent && (<div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
                 <span className="text-slate-600">Mobile OTP: <strong className="text-amber-900 tracking-wider">{phoneOtpSent}</strong></span>
                 <button type="button" onClick={() => setPhoneOtpInput(phoneOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
-              </div>
+              </div>)}
               <div className="flex items-center gap-2">
                 <Input
                   type="text"
