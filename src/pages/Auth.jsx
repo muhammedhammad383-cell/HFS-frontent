@@ -36,7 +36,7 @@ export default function Login() {
     setLoading(true);
     try {
       await api.post("/auth/forgot-password", { email: forgotEmail });
-      toast.success("OTP aapke email par bhej diya gaya hai!");
+      toast.success("Verification OTP has been sent to your email!");
       setForgotStep(2);
     } catch (err) {
       toast.error(apiError(err));
@@ -54,7 +54,7 @@ export default function Login() {
         otp: forgotOtp,
         new_password: newPassword,
       });
-      toast.success("Password reset ho gaya! Ab naye password se login karein.");
+      toast.success("Password reset successfully! Please login with your new password.");
       setShowForgot(false);
       setForgotStep(1);
       setForgotEmail("");
@@ -68,7 +68,7 @@ export default function Login() {
   };
     if (showForgot) {
     return (
-      <AuthShell title="Reset Password" sub="Apna email darj karein password reset karne ke liye">
+      <AuthShell title="Reset Password" sub="Enter your registered email to receive a password reset OTP">
         {forgotStep === 1 ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>

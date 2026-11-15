@@ -297,7 +297,7 @@ function Profile() {
       });
       if (cleanEmail) localStorage.setItem("hfs_verified_email", cleanEmail);
       if (cleanPhone) localStorage.setItem("hfs_verified_phone", cleanPhone);
-      toast.success("Profile successfully update ho gaya!");
+      toast.success("Profile updated successfully!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       toast.error(apiError(err));
@@ -310,7 +310,7 @@ function Profile() {
     <div className="bg-card p-6 rounded-2xl border border-border max-w-xl space-y-4">
       <div>
         <h2 className="text-lg font-bold">Profile Details</h2>
-        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update karein (Change karne par OTP verification hoga)</p>
+        <p className="text-xs text-muted-foreground">Manage your personal information and contact details</p>
       </div>
 
       <form onSubmit={handleUpdate} className="space-y-4">
@@ -319,7 +319,7 @@ function Profile() {
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Aapka Name"
+            placeholder="Enter your full name"
             required
           />
         </div>
