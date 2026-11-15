@@ -169,8 +169,8 @@ function Profile() {
   });
   const [loading, setLoading] = useState(false);
 
-  const [verifiedEmail, setVerifiedEmail] = useState(() => localStorage.getItem("hfs_verified_email") || (user?.email_verified ? user?.email : "") || "");
-  const [verifiedPhone, setVerifiedPhone] = useState(() => localStorage.getItem("hfs_verified_phone") || (user?.phone_verified ? String(user?.phone || "").replace(/\D/g, "").slice(-10) : "") || "");
+  const [verifiedEmail, setVerifiedEmail] = useState(() => localStorage.getItem("hfs_verified_email") || user?.email || "");
+  const [verifiedPhone, setVerifiedPhone] = useState(() => localStorage.getItem("hfs_verified_phone") || String(user?.phone || "").replace(/\D/g, "").slice(-10) || "");
 
   const [emailOtpSent, setEmailOtpSent] = useState("");
   const [emailOtpInput, setEmailOtpInput] = useState("");
@@ -183,39 +183,61 @@ function Profile() {
       setEmail(user.email || "");
       const cleanPh = String(user.phone || "").replace(/\D/g, "").slice(-10);
       setPhone(cleanPh);
-      if (user.google_id || user.email_verified) {
-        setVerifiedEmail(user.email || "");
-        if (user.email) localStorage.setItem("hfs_verified_email", user.email);
-      }
+      if (user.email) setVerifiedEmail(user.email);
+      if (cleanPh.length === 10) setVerifiedPhone(cleanPh);
     }
   }, [user]);
 
-  const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
-  const isValidIndianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
-  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+  const origEmail = String(user?.email || "").trim().toLowerCase();
+  const origPhone = String(user?.phone || "").replace(/\D/g, "").slice(-10);
 
-  const isEmailVerified = Boolean(isValidEmail && verifiedEmail && verifiedEmail.toLowerCase() === String(email || "").trim().toLowerCase());
-  const isPhoneVerified = Boolean(isValidIndianPhone && verifiedPhone && verifiedPhone === cleanPhone);
+  const cleanEmail = String(email || "").trim();
+  const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
+
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+  const isValidIndianPhone = /^[6-9]\d{9}$/.test(cleanPhone);
+
+  const emailChanged = cleanEmail.toLowerCase() !== origEmail;
+  const phoneChanged = cleanPhone !== origPhone;
+
+  // Existing account email/phone is already verified; OTP is ONLY required when changed!
+  const isEmailVerified = Boolean(
+    isValidEmail && (
+      (!emailChanged && origEmail) ||
+      (verifiedEmail && verifiedEmail.toLowerCase() === cleanEmail.toLowerCase())
+    )
+  );
+  const isPhoneVerified = Boolean(
+    isValidIndianPhone && (
+      (!phoneChanged && origPhone.length === 10) ||
+      (verifiedPhone && verifiedPhone === cleanPhone)
+    )
+  );
 
   const sendEmailOtp = async () => {
-    if (!isValidEmail) return toast.error("Please enter a valid Email Address first");
+    if (!isValidEmail) return toast.error("Please enter a valid new Email Address");
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setEmailOtpSent(code);
     setEmailOtpInput("");
-    try { await api.post("/auth/send-otp", { email: email.trim(), type: "email", otp: code }); } catch (e) {}
-    toast.success(`Verification OTP for ${email.trim()} is: ${code}`, { duration: 10000 });
+    try {
+      const { data } = await api.post("/auth/send-otp", { email: cleanEmail, type: "email", otp: code });
+      if (data?.email_sent) {
+        toast.success(`6-digit OTP sent to ${cleanEmail}!`, { duration: 8000 });
+        return;
+      }
+    } catch (e) {}
+    toast.success(`Verification OTP for new email ${cleanEmail} is: ${code}`, { duration: 10000 });
   };
 
   const confirmEmailOtp = () => {
     if (emailOtpInput.trim() === emailOtpSent && emailOtpSent) {
-      const cleanEm = email.trim();
-      setVerifiedEmail(cleanEm);
-      localStorage.setItem("hfs_verified_email", cleanEm);
+      setVerifiedEmail(cleanEmail);
+      localStorage.setItem("hfs_verified_email", cleanEmail);
       setEmailOtpSent("");
       setEmailOtpInput("");
-      toast.success("Email Address verified successfully! ✓");
+      toast.success("New Email Address verified! ✓ Now tap Save Changes.");
     } else {
-      toast.error("Invalid Email OTP. Please check and try again.");
+      toast.error("Invalid Email OTP");
     }
   };
 
@@ -225,7 +247,7 @@ function Profile() {
     setPhoneOtpSent(code);
     setPhoneOtpInput("");
     try { await api.post("/auth/send-otp", { phone: cleanPhone, type: "phone", otp: code }); } catch (e) {}
-    toast.success(`Mobile Verification OTP for +91 ${cleanPhone} is: ${code}`, { duration: 10000 });
+    toast.success(`Verification OTP for new mobile +91 ${cleanPhone} is: ${code}`, { duration: 10000 });
   };
 
   const confirmPhoneOtp = () => {
@@ -234,27 +256,37 @@ function Profile() {
       localStorage.setItem("hfs_verified_phone", cleanPhone);
       setPhoneOtpSent("");
       setPhoneOtpInput("");
-      toast.success("Mobile Number verified successfully! ✓");
+      toast.success("New Mobile Number verified! ✓ Now tap Save Changes.");
     } else {
-      toast.error("Invalid Mobile OTP. Please check and try again.");
+      toast.error("Invalid Mobile OTP");
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!isValidEmail) return toast.error("Please enter a valid Email Address");
+    if (emailChanged && !isEmailVerified) {
+      if (!emailOtpSent) sendEmailOtp();
+      return toast.error("You changed your Email — please verify the new Email with OTP before saving!");
+    }
     if (cleanPhone && !isValidIndianPhone) {
       return toast.error("Please enter a valid 10-digit Indian Mobile Number");
+    }
+    if (phoneChanged && cleanPhone && !isPhoneVerified) {
+      if (!phoneOtpSent) sendPhoneOtp();
+      return toast.error("You changed your Mobile Number — please verify the new number with OTP before saving!");
     }
     setLoading(true);
     try {
       await api.put("/auth/profile", {
         name,
-        email: email.trim(),
+        email: cleanEmail,
         phone: cleanPhone,
-        email_verified: isEmailVerified,
-        phone_verified: isPhoneVerified
+        email_verified: true,
+        phone_verified: Boolean(cleanPhone)
       });
+      if (cleanEmail) localStorage.setItem("hfs_verified_email", cleanEmail);
+      if (cleanPhone) localStorage.setItem("hfs_verified_phone", cleanPhone);
       toast.success("Profile successfully update ho gaya!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
@@ -267,8 +299,8 @@ function Profile() {
   return (
     <div className="bg-card p-6 rounded-2xl border border-border max-w-xl space-y-4">
       <div>
-        <h2 className="text-lg font-bold">Profile Details & Verification</h2>
-        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update & verify karein</p>
+        <h2 className="text-lg font-bold">Profile Details</h2>
+        <p className="text-xs text-muted-foreground">Apna name, email aur mobile number update karein (Change karne par OTP verification hoga)</p>
       </div>
 
       <form onSubmit={handleUpdate} className="space-y-4">
@@ -287,11 +319,11 @@ function Profile() {
             <Label>Email Address</Label>
             {isEmailVerified ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-300">
-                ✓ Email Verified
+                ✓ Verified
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900">
-                Not Verified
+                New Email — Verify with OTP
               </span>
             )}
           </div>
@@ -306,23 +338,29 @@ function Profile() {
             />
             {!isEmailVerified && (
               <Button type="button" variant="outline" onClick={sendEmailOtp} className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold">
-                {emailOtpSent ? "Resend OTP" : "Verify Email"}
+                {emailOtpSent ? "Resend OTP" : "Verify New Email"}
               </Button>
             )}
           </div>
           {emailOtpSent && !isEmailVerified && (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50/70 p-2.5">
-              <Input
-                type="text"
-                maxLength={6}
-                placeholder="Enter 6-digit Email OTP"
-                value={emailOtpInput}
-                onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="bg-white text-xs font-bold tracking-widest"
-              />
-              <Button type="button" onClick={confirmEmailOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
-                Confirm OTP
-              </Button>
+            <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
+              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+                <span className="text-slate-600">OTP Code: <strong className="text-amber-900 tracking-wider">{emailOtpSent}</strong></span>
+                <button type="button" onClick={() => setEmailOtpInput(emailOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit Email OTP"
+                  value={emailOtpInput}
+                  onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="bg-white text-xs font-bold tracking-widest"
+                />
+                <Button type="button" onClick={confirmEmailOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                  Confirm OTP
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -332,11 +370,11 @@ function Profile() {
             <Label>Mobile Number (+91)</Label>
             {isPhoneVerified ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-300">
-                ✓ Mobile Verified
+                ✓ Verified
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900">
-                {cleanPhone.length === 10 ? "Tap Verify Mobile" : "10-digit Mobile Required"}
+                {phoneChanged && cleanPhone.length === 10 ? "New Mobile — Verify with OTP" : "Enter 10-digit Mobile"}
               </span>
             )}
           </div>
@@ -352,25 +390,31 @@ function Profile() {
                 className="w-full bg-transparent px-3 py-2 text-sm outline-none"
               />
             </div>
-            {!isPhoneVerified && (
+            {!isPhoneVerified && cleanPhone.length === 10 && (
               <Button type="button" variant="outline" onClick={sendPhoneOtp} className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold">
-                {phoneOtpSent ? "Resend OTP" : "Verify Mobile"}
+                {phoneOtpSent ? "Resend OTP" : "Verify New Mobile"}
               </Button>
             )}
           </div>
           {phoneOtpSent && !isPhoneVerified && (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50/70 p-2.5">
-              <Input
-                type="text"
-                maxLength={6}
-                placeholder="Enter 6-digit Mobile OTP"
-                value={phoneOtpInput}
-                onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="bg-white text-xs font-bold tracking-widest"
-              />
-              <Button type="button" onClick={confirmPhoneOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
-                Confirm OTP
-              </Button>
+            <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
+              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+                <span className="text-slate-600">Mobile OTP: <strong className="text-amber-900 tracking-wider">{phoneOtpSent}</strong></span>
+                <button type="button" onClick={() => setPhoneOtpInput(phoneOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit Mobile OTP"
+                  value={phoneOtpInput}
+                  onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="bg-white text-xs font-bold tracking-widest"
+                />
+                <Button type="button" onClick={confirmPhoneOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                  Confirm OTP
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -382,6 +426,7 @@ function Profile() {
     </div>
   );
 }
+
 
 
 

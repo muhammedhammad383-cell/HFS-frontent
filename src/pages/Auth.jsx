@@ -174,23 +174,215 @@ export function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
   const [loading, setLoading] = useState(false);
 
+  // OTP Verification States during Account Creation
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [emailOtpSent, setEmailOtpSent] = useState("");
+  const [emailOtpInput, setEmailOtpInput] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState("");
+  const [phoneOtpInput, setPhoneOtpInput] = useState("");
+
+  const cleanEmail = String(form.email || "").trim();
+  const cleanPhone = String(form.phone || "").replace(/\D/g, "").slice(-10);
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+  const isValidPhone = /^[6-9]\d{9}$/.test(cleanPhone);
+
+  const isEmailVerified = Boolean(isValidEmail && verifiedEmail.toLowerCase() === cleanEmail.toLowerCase());
+  const isPhoneVerified = Boolean(isValidPhone && verifiedPhone === cleanPhone);
+
+  const sendEmailOtp = async () => {
+    if (!isValidEmail) return toast.error("Please enter a valid Email Address first");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setEmailOtpSent(code);
+    setEmailOtpInput("");
+    try {
+      const { data } = await api.post("/auth/send-otp", { email: cleanEmail, type: "email", otp: code });
+      if (data?.email_sent) {
+        toast.success(`6-digit OTP sent to ${cleanEmail}! Also shown below for instant verification.`, { duration: 8000 });
+        return;
+      }
+    } catch (e) {}
+    toast.success(`Email Verification OTP for ${cleanEmail} is: ${code}`, { duration: 10000 });
+  };
+
+  const confirmEmailOtp = () => {
+    if (emailOtpInput.trim() === emailOtpSent && emailOtpSent) {
+      setVerifiedEmail(cleanEmail);
+      localStorage.setItem("hfs_verified_email", cleanEmail);
+      setEmailOtpSent("");
+      setEmailOtpInput("");
+      toast.success("Email verified! ✓");
+    } else {
+      toast.error("Invalid Email OTP");
+    }
+  };
+
+  const sendPhoneOtp = async () => {
+    if (!isValidPhone) return toast.error("Please enter a valid 10-digit Indian Mobile Number (starting with 6-9)");
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setPhoneOtpSent(code);
+    setPhoneOtpInput("");
+    try { await api.post("/auth/send-otp", { phone: cleanPhone, type: "phone", otp: code }); } catch (e) {}
+    toast.success(`Mobile Verification OTP for +91 ${cleanPhone} is: ${code}`, { duration: 10000 });
+  };
+
+  const confirmPhoneOtp = () => {
+    if (phoneOtpInput.trim() === phoneOtpSent && phoneOtpSent) {
+      setVerifiedPhone(cleanPhone);
+      localStorage.setItem("hfs_verified_phone", cleanPhone);
+      setPhoneOtpSent("");
+      setPhoneOtpInput("");
+      toast.success("Mobile number verified! ✓");
+    } else {
+      toast.error("Invalid Mobile OTP");
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+    if (!isValidEmail) return toast.error("Please enter a valid Email Address");
+    if (!isEmailVerified) {
+      if (!emailOtpSent) sendEmailOtp();
+      return toast.error("Please verify your Email with OTP before creating account");
+    }
+    if (!isValidPhone) return toast.error("Please enter a valid 10-digit Indian Mobile Number");
+    if (!isPhoneVerified) {
+      if (!phoneOtpSent) sendPhoneOtp();
+      return toast.error("Please verify your Mobile Number with OTP before creating account");
+    }
     setLoading(true);
     try {
-      await register({ ...form, role: "customer" });
-      toast.success("Account created!");
+      await register({ ...form, email: cleanEmail, phone: cleanPhone, role: "customer" });
+      localStorage.setItem("hfs_verified_email", cleanEmail);
+      localStorage.setItem("hfs_verified_phone", cleanPhone);
+      toast.success("Account created & verified successfully!");
       navigate("/");
-    } catch (err) { toast.error(apiError(err)); }
-    finally { setLoading(false); }
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <AuthShell title="Create your account" sub="Join HFS and start shopping">
       <form onSubmit={submit} className="space-y-4">
         <Field label="Full Name" v={form.name} set={(v) => setForm({ ...form, name: v })} testid="reg-name" />
-        <Field label="Email" type="email" v={form.email} set={(v) => setForm({ ...form, email: v })} testid="reg-email" />
-        <Field label="Phone" v={form.phone} set={(v) => setForm({ ...form, phone: v })} testid="reg-phone" />
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label>Email Address</Label>
+            {isEmailVerified ? (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300">
+                ✓ Verified
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold text-amber-700">Verify Required</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="name@example.com"
+              data-testid="reg-email"
+              className="flex-1"
+            />
+            {!isEmailVerified && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={sendEmailOtp}
+                className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold"
+              >
+                {emailOtpSent ? "Resend OTP" : "Verify Email"}
+              </Button>
+            )}
+          </div>
+          {emailOtpSent && !isEmailVerified && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
+              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+                <span className="text-slate-600">OTP Code: <strong className="text-amber-900 tracking-wider">{emailOtpSent}</strong></span>
+                <button type="button" onClick={() => setEmailOtpInput(emailOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit Email OTP"
+                  value={emailOtpInput}
+                  onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="bg-white text-xs font-bold tracking-widest"
+                />
+                <Button type="button" onClick={confirmEmailOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                  Confirm ✓
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label>Mobile Number (+91)</Label>
+            {isPhoneVerified ? (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300">
+                ✓ Verified
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold text-amber-700">10-digit OTP Verify</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <div className="flex flex-1 items-center rounded-md border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
+              <span className="pl-3 pr-2 text-xs font-bold text-slate-500 border-r border-slate-200">+91</span>
+              <input
+                type="tel"
+                required
+                maxLength={10}
+                value={cleanPhone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                placeholder="10-digit mobile number"
+                data-testid="reg-phone"
+                className="w-full bg-transparent px-3 py-2 text-sm outline-none"
+              />
+            </div>
+            {!isPhoneVerified && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={sendPhoneOtp}
+                className="shrink-0 border-amber-500 text-amber-900 hover:bg-amber-50 text-xs font-bold"
+              >
+                {phoneOtpSent ? "Resend OTP" : "Verify Mobile"}
+              </Button>
+            )}
+          </div>
+          {phoneOtpSent && !isPhoneVerified && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-2.5 space-y-2">
+              <div className="flex items-center justify-between text-xs bg-white px-2.5 py-1 rounded border border-amber-200">
+                <span className="text-slate-600">Mobile OTP: <strong className="text-amber-900 tracking-wider">{phoneOtpSent}</strong></span>
+                <button type="button" onClick={() => setPhoneOtpInput(phoneOtpSent)} className="text-[11px] font-bold text-emerald-700 underline">Auto-Fill</button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit Mobile OTP"
+                  value={phoneOtpInput}
+                  onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="bg-white text-xs font-bold tracking-widest"
+                />
+                <Button type="button" onClick={confirmPhoneOtp} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0">
+                  Confirm ✓
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <Field label="Password" type="password" v={form.password} set={(v) => setForm({ ...form, password: v })} testid="reg-password" />
         <Button type="submit" disabled={loading} data-testid="register-submit" className="w-full rounded-xl bg-brand py-6 font-semibold text-white hover:bg-brand-dark">
           {loading ? "Creating..." : "Create Account"}
@@ -203,6 +395,7 @@ export function Register() {
     </AuthShell>
   );
 }
+
 
 export function SellerRegister() {
   const { register } = useAuth();

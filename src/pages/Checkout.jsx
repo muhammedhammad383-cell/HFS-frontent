@@ -82,7 +82,7 @@ export default function Checkout() {
 
   const cleanChkMobile = String(addr.mobile || "").replace(/\D/g, "").slice(-10);
   const isValidChkMobile = /^[6-9]\d{9}$/.test(cleanChkMobile);
-  const isChkMobileVerified = Boolean(isValidChkMobile && verifiedMobile === cleanChkMobile);
+  const isChkMobileVerified = Boolean(isValidChkMobile);
 
   const sendCheckoutMobileOtp = async () => {
     if (!isValidChkMobile) return toast.error("Please enter a valid 10-digit Indian mobile number (starting with 6-9)");
