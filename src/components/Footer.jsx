@@ -1,10 +1,31 @@
 import React from "react";
+import api from "@/lib/api";
 import { Link } from "react-router-dom";
 import { Home, Search, ShoppingCart, Heart, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 
 export function Footer() {
+  const [biz, setBiz] = React.useState({
+    primary_email: "support@hfsbazaar.in",
+    secondary_email: "hfsplastic@gmail.com",
+    mobile: "",
+  });
+  React.useEffect(() => {
+    api.get("/settings/business")
+      .then((res) => {
+        if (res?.data && typeof res.data === "object") {
+          setBiz({
+            primary_email: typeof res.data.primary_email === "string" ? res.data.primary_email : "",
+            secondary_email: typeof res.data.secondary_email === "string" ? res.data.secondary_email : "",
+            mobile: typeof res.data.mobile === "string" ? res.data.mobile : "",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+  const bizEmails = [biz.primary_email, biz.secondary_email].filter(Boolean);
+
   const cols = [
     {
       title: "Shop",
@@ -46,12 +67,16 @@ export function Footer() {
           <p className="mt-3 text-sm leading-relaxed text-slate-400">
             India&apos;s trusted direct-to-consumer store for premium saree covers, wardrobe organizers, and protective storage solutions.
           </p>
-          <div className="mt-4 space-y-1 text-xs leading-relaxed text-slate-400">
-            <p><strong className="text-slate-200">Legal Entity:</strong> HFS</p>
-            <p><strong className="text-slate-200">Proprietor:</strong> Mr. Mohammed Hammad Ejazul Haque Ansari</p>
-            <p><strong className="text-slate-200">Address:</strong> 25/M/95/, Behind F Block, 666, Municipal Transit Camp, Bapurao Jagtap Marg, Byculla (W), Mumbai - 400011</p>
-            <p><strong className="text-slate-200">Email:</strong> support@hfsbazaar.in | hfsplastic@gmail.com</p>
-          </div>
+          {(bizEmails.length > 0 || biz.mobile) && (
+            <div className="mt-4 space-y-1 text-xs leading-relaxed text-slate-400">
+              {bizEmails.length > 0 && (
+                <p><strong className="text-slate-200">Email:</strong> {bizEmails.join(" | ")}</p>
+              )}
+              {biz.mobile && (
+                <p><strong className="text-slate-200">Mobile:</strong> {biz.mobile}</p>
+              )}
+            </div>
+          )}
         </div>
         {cols.map((col) => (
           <div key={col.title}>

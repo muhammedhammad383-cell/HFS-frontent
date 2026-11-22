@@ -1796,6 +1796,100 @@ const Toggle = ({ label, checked, onChange, sub, testid }) => (
   </div>
 );
 
+
+function BusinessInfoSettings() {
+  const [form, setForm] = React.useState({
+    brand_name: "",
+    legal_name: "",
+    proprietor: "",
+    reg_no: "",
+    address: "",
+    primary_email: "",
+    secondary_email: "",
+    mobile: "",
+    hours: "",
+  });
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    api.get("/admin/settings/business")
+      .then((res) => {
+        if (res?.data) setForm((prev) => ({ ...prev, ...res.data }));
+      })
+      .catch((err) => toast.error(apiError(err)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.put("/admin/settings/business", form);
+      toast.success("Business & Contact details saved!");
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fields = [
+    ["brand_name", "Brand Name (Optional)", "HFS BAZAAR"],
+    ["legal_name", "Legal Entity Name (Optional)", "HFS"],
+    ["proprietor", "Proprietor Name (Optional)", "Mr. Mohammed Hammad Ejazul Haque Ansari"],
+    ["reg_no", "Registration No. (Optional)", "BMC / GST / Shop Act No."],
+    ["primary_email", "Primary Support Email (Optional)", "support@hfsbazaar.in"],
+    ["secondary_email", "Alternate Email (Optional)", "hfsplastic@gmail.com"],
+    ["mobile", "Mobile / WhatsApp Number (Optional)", "+91 98XXXXXXXX"],
+    ["hours", "Support Hours (Optional)", "Monday to Saturday, 10:00 AM to 6:00 PM IST"],
+  ];
+
+  if (loading) return <div className="p-6 text-sm text-slate-500">Loading business details...</div>;
+
+  return (
+    <div className="max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-bold text-slate-900">Business & Contact Details</h2>
+      <p className="mt-1 text-xs text-slate-500">
+        Sabhi fields optional hain. Jo field khaali chhodenge woh Contact Us aur website se hide rahegi.
+      </p>
+      <form onSubmit={handleSave} className="mt-5 space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {fields.map(([key, label, ph]) => (
+            <div key={key}>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">{label}</label>
+              <input
+                type="text"
+                value={form[key] || ""}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                placeholder={ph}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+          ))}
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-700">Registered Address (Optional)</label>
+          <textarea
+            rows={3}
+            value={form.address || ""}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            placeholder="Full business address (optional)"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-amber-500 focus:outline-none"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+        >
+          {saving ? "Saving..." : "Save Contact Details"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -1812,6 +1906,7 @@ export default function AdminDashboard() {
     ["/admin/returns", "Returns", RotateCcw],
     ["/admin/payouts", "Payouts", Wallet],
     ["/admin/settings", "Settings", Settings],
+    ["/admin/business", "Contact Info", Store],
   ];
   return (
     <div className="min-h-screen bg-background">
@@ -1853,6 +1948,7 @@ export default function AdminDashboard() {
             <Route path="returns" element={<Returns />} />
             <Route path="payouts" element={<DataTable url="/admin/payouts" />} />
             <Route path="settings" element={<AdminSettings />} />
+              <Route path="business" element={<BusinessInfoSettings />} />
           </Routes>    
           </div>
         </main>

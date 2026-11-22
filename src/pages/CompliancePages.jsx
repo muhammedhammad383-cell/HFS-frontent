@@ -1,7 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import api from "@/lib/api";
 import { Link, useParams } from "react-router-dom";
 
-const BUSINESS = {
+const DEFAULT_BUSINESS = {
+  mobile: "",
   legalName: "HFS",
   brandName: "HFS BAZAAR",
   proprietor: "Mr. Mohammed Hammad Ejazul Haque Ansari",
@@ -12,7 +14,8 @@ const BUSINESS = {
   hours: "Monday to Saturday, 10:00 AM to 6:00 PM IST"
 };
 
-const POLICIES = {
+function buildPolicies(BUSINESS) {
+  return {
   about: {
     title: "About Us",
     content: `Welcome to ${BUSINESS.brandName} (operated by ${BUSINESS.legalName}), India's trusted Direct-to-Consumer (D2C) online store for home organization, wardrobe storage, saree covers, storage bags, and protective covers.
@@ -161,14 +164,52 @@ Prop. ${BUSINESS.proprietor}
 ${BUSINESS.address}
 Support Email: ${BUSINESS.primaryEmail} | ${BUSINESS.secondaryEmail}`
   }
-};
+  };
+}
 
 POLICIES.cancellation = POLICIES.returns;
 
 export function LegalPage({ forcedSlug }) {
   const params = useParams();
   const slug = forcedSlug || params.slug || "about";
-  const page = POLICIES[slug] || POLICIES.about;
+  const [biz, setBiz] = useState(DEFAULT_BUSINESS);
+  useEffect(() => {
+    api.get("/settings/business")
+      .then((res) => {
+        const d = res?.data;
+        if (d && typeof d === "object") {
+          setBiz({
+            brandName: typeof d.brand_name === "string" ? d.brand_name : "",
+            legalName: typeof d.legal_name === "string" ? d.legal_name : "",
+            proprietor: typeof d.proprietor === "string" ? d.proprietor : "",
+            regNo: typeof d.reg_no === "string" ? d.reg_no : "",
+            address: typeof d.address === "string" ? d.address : "",
+            primaryEmail: typeof d.primary_email === "string" ? d.primary_email : "",
+            secondaryEmail: typeof d.secondary_email === "string" ? d.secondary_email : "",
+            mobile: typeof d.mobile === "string" ? d.mobile : "",
+            hours: typeof d.hours === "string" ? d.hours : "",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+  const policies = buildPolicies(biz);
+  let page = policies[slug] || policies.about;
+  if (slug === "contact") {
+    const lines = [
+      "We are here to help with orders, returns, bulk inquiries, and product support.",
+      "",
+      biz.legalName ? `Legal Entity Name: ${biz.legalName}` : null,
+      biz.proprietor ? `Proprietor Name: ${biz.proprietor}` : null,
+      biz.regNo ? `Registration No.: ${biz.regNo}` : null,
+      biz.address ? `Registered Address: ${biz.address}` : null,
+      biz.primaryEmail ? `Primary Support Email: ${biz.primaryEmail}` : null,
+      biz.secondaryEmail ? `Alternate Business Email: ${biz.secondaryEmail}` : null,
+      biz.mobile ? `Mobile / Phone: ${biz.mobile}` : null,
+      biz.hours ? `Support Hours: ${biz.hours}` : null,
+    ].filter((x) => x !== null);
+    page = { title: "Contact Us", content: lines.join("\n") };
+  }
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -178,7 +219,7 @@ export function LegalPage({ forcedSlug }) {
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
         <span className="inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
-          Official Store Policy • {BUSINESS.brandName}
+          Official Store Policy • {biz.brandName}
         </span>
         <h1 className="mt-3 font-heading text-2xl font-extrabold text-slate-900 sm:text-3xl">
           {page.title}
@@ -186,10 +227,18 @@ export function LegalPage({ forcedSlug }) {
         <div className="mt-6 whitespace-pre-line text-sm leading-relaxed text-slate-700 sm:text-base">
           {page.content}
         </div>
-        <div className="mt-8 border-t border-slate-100 pt-5 text-xs text-slate-500">
-          <strong>Legal Entity:</strong> {BUSINESS.legalName} (Proprietor: {BUSINESS.proprietor}) •{" "}
-          <strong>Email:</strong> {BUSINESS.primaryEmail}
-        </div>
+        {(biz.legalName || biz.proprietor || biz.primaryEmail || biz.mobile) && (
+          <div className="mt-8 border-t border-slate-100 pt-5 text-xs text-slate-500 space-y-1">
+            {(biz.legalName || biz.proprietor) && (
+              <p>
+                {biz.legalName && (<><strong>Legal Entity:</strong> {biz.legalName}{" "}</>)}
+                {biz.proprietor && (<>(Proprietor: {biz.proprietor})</>)}
+              </p>
+            )}
+            {biz.primaryEmail && (<p><strong>Email:</strong> {biz.primaryEmail}</p>)}
+            {biz.mobile && (<p><strong>Mobile:</strong> {biz.mobile}</p>)}
+          </div>
+        )}
       </div>
       <Link to="/" className="mt-6 inline-block text-sm font-semibold text-emerald-700 hover:underline">
         ← Back to Home
