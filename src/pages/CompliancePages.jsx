@@ -166,6 +166,7 @@ Support Email: ${BUSINESS.primaryEmail} | ${BUSINESS.secondaryEmail}`
   }
   };
 }
+const POLICIES = buildPolicies(DEFAULT_BUSINESS);
 
 POLICIES.cancellation = POLICIES.returns;
 
